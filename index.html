@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iuran Sampah & Pengaduan - Gang Kadeudeuh</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗑️</text></svg>">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-iuran, #printable-iuran * {
+                visibility: visible;
+            }
+            #printable-iuran {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white;
+                padding: 20px;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="bg-emerald-600 text-white shadow-md no-print">
+        <div class="max-w-md mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-lg font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-trash-can"></i> Iuran Sampah Warga
+                </h1>
+                <p class="text-xs text-emerald-100">Gang Kadeudeuh - Blok I4 & I5</p>
+            </div>
+            <!-- Tombol Rahasia Akses Dashboard Ketua -->
+            <button onclick="bukaDashboard()" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-500 transition cursor-pointer flex items-center gap-1">
+                <i class="fa-solid fa-lock"></i> Admin
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content: Form Warga -->
+    <main id="section-form" class="max-w-md mx-auto p-4 w-full my-auto no-print space-y-6">
+        
+        <!-- FORM 1: PEMBAYARAN IURAN -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="border-b pb-3 mb-4">
+                <h2 class="text-lg font-semibold text-emerald-700 flex items-center gap-2">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Form Konfirmasi Pembayaran
+                </h2>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    Warga Gang Kadeudeuh, Perumahan Serasi Indah (Blok I4 & I5)
+                </p>
+            </div>
+            
+            <form id="iuranForm" onsubmit="submitForm(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium mb-1 text-gray-600">Blok Rumah</label>
+                        <select id="blok" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                            <option value="I4">Blok I4</option>
+                            <option value="I5">Blok I5</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 text-gray-600">Nomor Rumah</label>
+                        <input type="text" id="nomor" required placeholder="28" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium mb-1 text-gray-600">Untuk Bulan</label>
+                        <select id="bulan" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                            <!-- Opsi Bulan Dinamis (November 2026 - Desember 2028) -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 text-gray-600">Nominal (Rp)</label>
+                        <input type="number" id="nominal" value="40000" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-600">Nama Warga / Keterangan</label>
+                    <input type="text" id="keterangan" required placeholder="Contoh: Bpk. Budi" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-600">Upload Bukti Screenshot Pembayaran</label>
+                    <input type="file" id="buktiFile" accept="image/*" required class="w-full border rounded-lg px-3 py-2 text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition shadow text-sm mt-2 cursor-pointer">
+                    <i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Konfirmasi Pembayaran
+                </button>
+            </form>
+        </div>
+
+        <!-- FORM 2: PENGADUAN WARGA -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="border-b pb-3 mb-4">
+                <h2 class="text-lg font-semibold text-amber-700 flex items-center gap-2">
+                    <i class="fa-solid fa-bullhorn"></i> Layanan Pengaduan Lingkungan
+                </h2>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    Sampaikan kendala kebersihan, keamanan, atau fasilitas lingkungan
+                </p>
+            </div>
+            
+            <form id="pengaduanForm" onsubmit="submitPengaduan(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium mb-1 text-gray-600">Blok Rumah</label>
+                        <select id="p_blok" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white">
+                            <option value="I4">Blok I4</option>
+                            <option value="I5">Blok I5</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 text-gray-600">Nomor Rumah</label>
+                        <input type="text" id="p_nomor" required placeholder="28" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-600">Nama Pelapor</label>
+                    <input type="text" id="p_nama" required placeholder="Contoh: Bpk. Budi" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-600">Kategori Pengaduan</label>
+                    <select id="p_kategori" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white">
+                        <option value="Sampah Belum Diangkut">Sampah Belum Diangkut</option>
+                        <option value="Saluran / Got Mampet">Saluran / Got Mampet</option>
+                        <option value="Lampu Jalan / Fasilitas Rusak">Lampu Jalan / Fasilitas Rusak</option>
+                        <option value="Keamanan / Ketertiban">Keamanan / Ketertiban</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-600">Detail Masalah / Keluhan</label>
+                    <textarea id="p_detail" rows="3" required placeholder="Tuliskan lokasi rinci atau kronologi singkat..." class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-600">Upload Foto Bukti (Opsional)</label>
+                    <input type="file" id="p_buktiFile" accept="image/*" class="w-full border rounded-lg px-3 py-2 text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+                </div>
+
+                <button type="submit" id="p_submitBtn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2.5 rounded-lg transition shadow text-sm mt-2 cursor-pointer">
+                    <i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Pengaduan
+                </button>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- Main Content: Dashboard Internal Ketua (Hidden by default) -->
+    <main id="section-dashboard" class="max-w-5xl mx-auto p-4 w-full my-auto hidden">
+        
+        <!-- Navbar Navigasi Tab Dashboard -->
+        <div class="flex justify-between items-center mb-6 no-print bg-white p-4 rounded-xl shadow-md">
+            <div class="flex gap-2">
+                <button onclick="switchAdminTab('iuran')" id="tabBtnIuran" class="px-4 py-2 rounded-lg font-semibold text-xs bg-emerald-600 text-white transition cursor-pointer">
+                    <i class="fa-solid fa-file-invoice-dollar mr-1"></i> Rekap Iuran Warga
+                </button>
+                <button onclick="switchAdminTab('pengaduan')" id="tabBtnPengaduan" class="px-4 py-2 rounded-lg font-semibold text-xs bg-gray-200 text-gray-700 transition cursor-pointer">
+                    <i class="fa-solid fa-bullhorn mr-1"></i> Pengaduan Warga
+                </button>
+            </div>
+            <button onclick="tutupDashboard()" class="bg-gray-500 hover:bg-gray-600 text-white text-xs px-4 py-2 rounded-lg transition font-medium cursor-pointer">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Keluar Admin
+            </button>
+        </div>
+
+        <!-- TAB 1: REKAP IURAN -->
+        <div id="dash-iuran" class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div id="printable-iuran">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-slate-800">
+                            <i class="fa-solid fa-table-list mr-2 text-emerald-600"></i> Laporan Rekap Iuran Sampah Warga
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Gang Kadeudeuh, Perumahan Serasi Indah (Blok I4 & I5)</p>
+                        <p class="text-xs text-emerald-700 font-semibold mt-1" id="reportSubTitle">Periode: Semua Bulan</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 no-print">
+                        <select id="filterBulan" onchange="loadDashboardData()" class="text-xs border rounded-lg px-3 py-2 bg-gray-50 font-medium outline-none">
+                            <option value="Semua">Semua Bulan</option>
+                        </select>
+                        <button onclick="downloadPDF()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded-lg transition font-medium cursor-pointer flex items-center gap-1">
+                            <i class="fa-solid fa-file-pdf"></i> Download PDF
+                        </button>
+                        <button onclick="clearData()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-2 rounded-lg transition font-medium cursor-pointer">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Reset Iuran
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b">
+                                <th class="p-3">Waktu Masuk</th>
+                                <th class="p-3">Blok / No</th>
+                                <th class="p-3">Periode Bulan</th>
+                                <th class="p-3">Nominal</th>
+                                <th class="p-3">Warga / Ket</th>
+                                <th class="p-3 text-center no-print">Bukti Transfer</th>
+                                <th class="p-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rekapTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="emptyState" class="text-center py-12 text-gray-400">
+                    <i class="fa-solid fa-folder-open text-3xl mb-2 text-gray-300 block"></i>
+                    Belum ada data pembayaran warga yang tercatat.
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: REKAP PENGADUAN -->
+        <div id="dash-pengaduan" class="bg-white rounded-xl shadow-md p-6 mb-8 hidden">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <div>
+                    <h2 class="text-xl font-semibold text-amber-800">
+                        <i class="fa-solid fa-bullhorn mr-2 text-amber-600"></i> Rekap Pengaduan & Keluhan Warga
+                    </h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Gang Kadeudeuh, Perumahan Serasi Indah (Blok I4 & I5)</p>
+                </div>
+                <button onclick="clearPengaduanData()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-2 rounded transition no-print cursor-pointer">
+                    <i class="fa-solid fa-trash mr-1"></i> Hapus Pengaduan
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-amber-50 text-amber-900 border-b">
+                            <th class="p-3">Waktu</th>
+                            <th class="p-3">Blok / No</th>
+                            <th class="p-3">Pelapor</th>
+                            <th class="p-3">Kategori</th>
+                            <th class="p-3">Detail Keluhan</th>
+                            <th class="p-3 text-center no-print">Foto Bukti</th>
+                            <th class="p-3 text-center">Status Laporan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pengaduanTableBody"></tbody>
+                </table>
+            </div>
+
+            <div id="emptyPengaduanState" class="text-center py-12 text-gray-400">
+                <i class="fa-solid fa-comments text-3xl mb-2 text-gray-300 block"></i>
+                Belum ada pengaduan dari warga.
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL PREVIEW GAMBAR UTUH -->
+    <div id="imageModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50" onclick="closeModal()">
+        <div class="bg-white p-3 rounded-xl max-w-lg w-full relative shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-2 pb-2 border-b">
+                <span class="font-semibold text-sm text-gray-700"><i class="fa-solid fa-image mr-1.5 text-emerald-600"></i> Lampiran Foto</span>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 font-bold text-lg px-2 cursor-pointer">✕</button>
+            </div>
+            <img id="modalImg" src="" alt="Bukti Foto" class="w-full h-auto rounded-lg max-h-[80vh] object-contain border">
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-gray-500 no-print">
+        &copy; 2026 Gang Kadeudeuh by <a href="https://muktijasaweb.com" target="_blank" class="text-blue-500 hover:underline">muktijasaweb.com</a>
+    </footer>
+
+    <script>
+        // Kredensial Fonnte & Target ID Grup WhatsApp Warga
+        const FONNTE_TOKEN = "RV12hvyeeNLfa9iUnowW";
+        const FONNTE_SENDER = "6288709656799";
+        const FONNTE_TARGET = "120363044627819543@g.us";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const listBulan = [
+                "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
+                "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+            ];
+            
+            const selectForm = document.getElementById('bulan');
+            const selectFilter = document.getElementById('filterBulan');
+            
+            selectForm.innerHTML = '';
+            
+            for (let tahun = 2026; tahun <= 2028; tahun++) {
+                let mulaiBulan = (tahun === 2026) ? 10 : 0; // Mulai November 2026
+                for (let b = mulaiBulan; b < 12; b++) {
+                    let namaPeriode = `${listBulan[b]} ${tahun}`;
+                    
+                    let opt1 = document.createElement('option');
+                    opt1.value = namaPeriode;
+                    opt1.text = namaPeriode;
+                    selectForm.appendChild(opt1);
+
+                    let opt2 = document.createElement('option');
+                    opt2.value = namaPeriode;
+                    opt2.text = namaPeriode;
+                    selectFilter.appendChild(opt2);
+                }
+            }
+        });
+
+        // Switch Tab Admin
+        function switchAdminTab(tab) {
+            const btnIuran = document.getElementById('tabBtnIuran');
+            const btnPengaduan = document.getElementById('tabBtnPengaduan');
+            const contentIuran = document.getElementById('dash-iuran');
+            const contentPengaduan = document.getElementById('dash-pengaduan');
+
+            if (tab === 'iuran') {
+                btnIuran.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-emerald-600 text-white transition cursor-pointer";
+                btnPengaduan.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-gray-200 text-gray-700 transition cursor-pointer";
+                contentIuran.classList.remove('hidden');
+                contentPengaduan.classList.add('hidden');
+            } else {
+                btnPengaduan.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-amber-600 text-white transition cursor-pointer";
+                btnIuran.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-gray-200 text-gray-700 transition cursor-pointer";
+                contentPengaduan.classList.remove('hidden');
+                contentIuran.classList.add('hidden');
+            }
+        }
+
+        // SUBMIT FORM PEMBAYARAN
+        function submitForm(event) {
+            event.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan & Mengirim...';
+
+            const blok = document.getElementById('blok').value.trim();
+            const nomor = document.getElementById('nomor').value.trim();
+            const bulan = document.getElementById('bulan').value;
+            const nominal = Number(document.getElementById('nominal').value);
+            const keterangan = document.getElementById('keterangan').value.trim();
+            const fileInput = document.getElementById('buktiFile');
+
+            if (!fileInput.files[0]) {
+                alert('Silakan sertakan foto screenshot bukti transfer.');
+                resetButton(btn);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const base64Image = e.target.result;
+                    const timestamp = new Date().toLocaleString('id-ID');
+
+                    const newData = {
+                        timestamp,
+                        blok,
+                        nomor,
+                        bulan,
+                        nominal,
+                        keterangan,
+                        image: base64Image,
+                        status: 'Menunggu Verifikasi'
+                    };
+
+                    let existingData = JSON.parse(localStorage.getItem('iuran_sampah_data')) || [];
+                    existingData.unshift(newData);
+                    localStorage.setItem('iuran_sampah_data', JSON.stringify(existingData));
+
+                    sendWhatsAppNotification(newData, function() {
+                        alert('Terima kasih! Data konfirmasi pembayaran berhasil dikirim ke Grup WA.');
+                        document.getElementById('iuranForm').reset();
+                        resetButton(btn);
+                    });
+                } catch (err) {
+                    console.error("Gagal menyimpan:", err);
+                    alert("Terjadi kesalahan saat memproses gambar.");
+                    resetButton(btn);
+                }
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+
+        // SUBMIT FORM PENGADUAN
+        function submitPengaduan(event) {
+            event.preventDefault();
+            const btn = document.getElementById('p_submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Mengirim Pengaduan...';
+
+            const blok = document.getElementById('p_blok').value;
+            const nomor = document.getElementById('p_nomor').value.trim();
+            const nama = document.getElementById('p_nama').value.trim();
+            const kategori = document.getElementById('p_kategori').value;
+            const detail = document.getElementById('p_detail').value.trim();
+            const fileInput = document.getElementById('p_buktiFile');
+
+            const timestamp = new Date().toLocaleString('id-ID');
+
+            const saveAndNotify = (base64Image) => {
+                const newPengaduan = {
+                    timestamp,
+                    blok,
+                    nomor,
+                    nama,
+                    kategori,
+                    detail,
+                    image: base64Image || null,
+                    status: 'Belum Diproses'
+                };
+
+                let existing = JSON.parse(localStorage.getItem('iuran_pengaduan_data')) || [];
+                existing.unshift(newPengaduan);
+                localStorage.setItem('iuran_pengaduan_data', JSON.stringify(existing));
+
+                sendWaPengaduan(newPengaduan, function() {
+                    alert('Pengaduan Anda telah terkirim ke Grup WA pengurus. Terima kasih!');
+                    document.getElementById('pengaduanForm').reset();
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Pengaduan';
+                });
+            };
+
+            if (fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveAndNotify(e.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                saveAndNotify(null);
+            }
+        }
+
+        function resetButton(btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Konfirmasi Pembayaran';
+        }
+
+        function sendWhatsAppNotification(data, callback) {
+            const pesanWa = `🔔 *KONFIRMASI IURAN SAMPAH*\n` +
+                            `📍 *Gang Kadeudeuh (Blok I4 & I5)*\n\n` +
+                            `📅 *Bulan:* ${data.bulan}\n` +
+                            `🏠 *Blok/Nomor:* Blok ${data.blok} / No. ${data.nomor}\n` +
+                            `💰 *Nominal:* Rp ${data.nominal.toLocaleString('id-ID')}\n` +
+                            `👤 *Warga/Keterangan:* ${data.keterangan}\n` +
+                            `⏰ *Waktu:* ${data.timestamp}\n\n` +
+                            `Status: Pembayaran tercatat & menunggu verifikasi Ketua.`;
+
+            const formData = new URLSearchParams();
+            formData.append('target', FONNTE_TARGET);
+            formData.append('sender', FONNTE_SENDER);
+            formData.append('message', pesanWa);
+
+            fetch('https://api.fonnte.com/send', {
+                method: 'POST',
+                headers: { 'Authorization': FONNTE_TOKEN },
+                body: formData
+            }).then(() => { if(callback) callback(); }).catch(() => { if(callback) callback(); });
+        }
+
+        function sendWaPengaduan(data, callback) {
+            const pesanWa = `⚠️ *LAPORAN PENGADUAN WARGA*\n` +
+                            `📍 *Gang Kadeudeuh (Blok I4 & I5)*\n\n` +
+                            `🏠 *Lokasi:* Blok ${data.blok} / No. ${data.nomor}\n` +
+                            `👤 *Pelapor:* ${data.nama}\n` +
+                            `📌 *Kategori:* ${data.kategori}\n` +
+                            `📝 *Detail:* ${data.detail}\n` +
+                            `⏰ *Waktu:* ${data.timestamp}\n\n` +
+                            `Mohon ditindaklanjuti oleh Pengurus RT/RW.`;
+
+            const formData = new URLSearchParams();
+            formData.append('target', FONNTE_TARGET);
+            formData.append('sender', FONNTE_SENDER);
+            formData.append('message', pesanWa);
+
+            fetch('https://api.fonnte.com/send', {
+                method: 'POST',
+                headers: { 'Authorization': FONNTE_TOKEN },
+                body: formData
+            }).then(() => { if(callback) callback(); }).catch(() => { if(callback) callback(); });
+        }
+
+        function bukaDashboard() {
+            let pin = prompt("Masukkan PIN Akses Pengurus:");
+            if (pin === "1234") {
+                document.getElementById('section-form').classList.add('hidden');
+                document.getElementById('section-dashboard').classList.remove('hidden');
+                loadDashboardData();
+            } else if (pin !== null) {
+                alert("PIN salah!");
+            }
+        }
+
+        function tutupDashboard() {
+            document.getElementById('section-dashboard').classList.add('hidden');
+            document.getElementById('section-form').classList.remove('hidden');
+        }
+
+        function getStatusClass(status) {
+            if (status === 'Lunas / Terverifikasi' || status === 'Selesai / Ditangani') {
+                return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+            } else if (status === 'Ditolak') {
+                return 'bg-red-100 text-red-800 border-red-300';
+            } else if (status === 'Sedang Diproses') {
+                return 'bg-blue-100 text-blue-800 border-blue-300';
+            } else {
+                return 'bg-amber-100 text-amber-800 border-amber-300';
+            }
+        }
+
+        function loadDashboardData() {
+            // Load Iuran
+            const tbody = document.getElementById('rekapTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const filterBulan = document.getElementById('filterBulan').value;
+            const reportSubTitle = document.getElementById('reportSubTitle');
+            
+            reportSubTitle.innerText = `Periode: ${filterBulan}`;
+            const data = JSON.parse(localStorage.getItem('iuran_sampah_data')) || [];
+
+            const filteredData = data.filter(item => {
+                if (filterBulan === 'Semua') return true;
+                return item.bulan === filterBulan;
+            });
+
+            tbody.innerHTML = '';
+            if (filteredData.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                filteredData.forEach((item) => {
+                    const originalIndex = data.findIndex(d => d.timestamp === item.timestamp && d.blok === item.blok && d.nomor === item.nomor);
+                    const currentStatus = item.status || 'Menunggu Verifikasi';
+                    const statusClass = getStatusClass(currentStatus);
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b hover:bg-slate-50 transition";
+                    tr.innerHTML = `
+                        <td class="p-3 text-xs text-gray-500">${item.timestamp}</td>
+                        <td class="p-3 font-semibold text-slate-800">Blok ${item.blok} / ${item.nomor}</td>
+                        <td class="p-3 font-medium">${item.bulan}</td>
+                        <td class="p-3 font-semibold text-emerald-700">Rp ${Number(item.nominal).toLocaleString('id-ID')}</td>
+                        <td class="p-3">${item.keterangan}</td>
+                        <td class="p-3 text-center no-print">
+                            <button onclick="openModal('${item.image}')" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 mx-auto transition cursor-pointer">
+                                <i class="fa-solid fa-eye"></i> Lihat Bukti
+                            </button>
+                        </td>
+                        <td class="p-3 text-center">
+                            <select onchange="updateStatus(${originalIndex}, this.value)" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer transition ${statusClass}">
+                                <option value="Menunggu Verifikasi" ${currentStatus === 'Menunggu Verifikasi' ? 'selected' : ''}>⏳ Menunggu Verifikasi</option>
+                                <option value="Lunas / Terverifikasi" ${currentStatus === 'Lunas / Terverifikasi' ? 'selected' : ''}>✅ Lunas / Terverifikasi</option>
+                            </select>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Load Pengaduan
+            loadPengaduanData();
+        }
+
+        function loadPengaduanData() {
+            const tbody = document.getElementById('pengaduanTableBody');
+            const emptyState = document.getElementById('emptyPengaduanState');
+            const data = JSON.parse(localStorage.getItem('iuran_pengaduan_data')) || [];
+
+            tbody.innerHTML = '';
+            if (data.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            data.forEach((item, index) => {
+                const currentStatus = item.status || 'Belum Diproses';
+                const statusClass = getStatusClass(currentStatus);
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 text-xs text-gray-500">${item.timestamp}</td>
+                    <td class="p-3 font-semibold text-slate-800">Blok ${item.blok} / ${item.nomor}</td>
+                    <td class="p-3 font-medium">${item.nama}</td>
+                    <td class="p-3"><span class="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded font-medium">${item.kategori}</span></td>
+                    <td class="p-3 max-w-xs text-xs">${item.detail}</td>
+                    <td class="p-3 text-center no-print">
+                        ${item.image ? `<button onclick="openModal('${item.image}')" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 px-3 py-1 rounded text-xs font-semibold cursor-pointer"><i class="fa-solid fa-eye"></i> Foto</button>` : `<span class="text-xs text-gray-400">-</span>`}
+                    </td>
+                    <td class="p-3 text-center">
+                        <select onchange="updatePengaduanStatus(${index}, this.value)" class="text-xs font-semibold px-2 py-1 rounded-lg border outline-none cursor-pointer transition ${statusClass}">
+                            <option value="Belum Diproses" ${currentStatus === 'Belum Diproses' ? 'selected' : ''}>⏳ Belum Diproses</option>
+                            <option value="Sedang Diproses" ${currentStatus === 'Sedang Diproses' ? 'selected' : ''}>🛠️ Sedang Diproses</option>
+                            <option value="Selesai / Ditangani" ${currentStatus === 'Selesai / Ditangani' ? 'selected' : ''}>✅ Selesai / Ditangani</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStatus(index, newStatus) {
+            let data = JSON.parse(localStorage.getItem('iuran_sampah_data')) || [];
+            if (data[index]) {
+                data[index].status = newStatus;
+                localStorage.setItem('iuran_sampah_data', JSON.stringify(data));
+                loadDashboardData();
+            }
+        }
+
+        function updatePengaduanStatus(index, newStatus) {
+            let data = JSON.parse(localStorage.getItem('iuran_pengaduan_data')) || [];
+            if (data[index]) {
+                data[index].status = newStatus;
+                localStorage.setItem('iuran_pengaduan_data', JSON.stringify(data));
+                loadPengaduanData();
+            }
+        }
+
+        function downloadPDF() {
+            // Hanya mencetak tabel rekap iuran warga saja
+            window.print();
+        }
+
+        function openModal(imgSrc) {
+            document.getElementById('modalImg').src = imgSrc;
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+        }
+
+        function clearData() {
+            if (confirm('Apakah Anda yakin ingin menghapus seluruh data rekap iuran?')) {
+                localStorage.removeItem('iuran_sampah_data');
+                loadDashboardData();
+            }
+        }
+
+        function clearPengaduanData() {
+            if (confirm('Apakah Anda yakin ingin menghapus seluruh data pengaduan?')) {
+                localStorage.removeItem('iuran_pengaduan_data');
+                loadPengaduanData();
+            }
+        }
+    </script>
+</body>
+</html>
