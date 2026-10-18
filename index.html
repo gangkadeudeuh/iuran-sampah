@@ -15,10 +15,11 @@
             body * {
                 visibility: hidden;
             }
-            #printable-iuran, #printable-iuran * {
+            #printable-iuran, #printable-iuran *,
+            #printable-saldokas, #printable-saldokas * {
                 visibility: visible;
             }
-            #printable-iuran {
+            #printable-iuran, #printable-saldokas {
                 position: absolute;
                 left: 0;
                 top: 0;
@@ -34,7 +35,7 @@
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 min-h-screen flex flex-col justify-between">
 
-    <!-- Header -->
+    <!-- Header dengan Informasi Saldo Gang Kadeudeuh -->
     <header class="bg-emerald-600 text-white shadow-md no-print">
         <div class="max-w-md mx-auto px-4 py-4 flex justify-between items-center">
             <div>
@@ -43,10 +44,17 @@
                 </h1>
                 <p class="text-xs text-emerald-100">Gang Kadeudeuh - Blok I4 & I5</p>
             </div>
-            <!-- Tombol Rahasia Akses Dashboard Ketua -->
-            <button onclick="bukaDashboard()" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-500 transition cursor-pointer flex items-center gap-1">
-                <i class="fa-solid fa-lock"></i> Admin
-            </button>
+            
+            <!-- Saldo & Tombol Admin -->
+            <div class="flex items-center gap-2">
+                <div class="bg-emerald-700/80 border border-emerald-500/60 px-2.5 py-1 rounded-lg text-right">
+                    <p class="text-[10px] text-emerald-200 leading-tight">Saldo Kas</p>
+                    <p class="text-xs font-bold text-white leading-tight" id="headerSaldo">Rp 0</p>
+                </div>
+                <button onclick="bukaDashboard()" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-2 rounded-lg border border-emerald-500 transition cursor-pointer flex items-center gap-1 font-semibold">
+                    <i class="fa-solid fa-lock text-[10px]"></i> Admin
+                </button>
+            </div>
         </div>
     </header>
 
@@ -83,7 +91,7 @@
                     <div>
                         <label class="block text-xs font-medium mb-1 text-gray-600">Untuk Bulan</label>
                         <select id="bulan" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
-                            <!-- Opsi Bulan Dinamis (November 2026 - Desember 2028) -->
+                            <!-- Opsi Bulan Dinamis -->
                         </select>
                     </div>
                     <div>
@@ -168,17 +176,20 @@
 
     </main>
 
-    <!-- Main Content: Dashboard Internal Ketua (Hidden by default) -->
+    <!-- Main Content: Dashboard Internal Ketua -->
     <main id="section-dashboard" class="max-w-5xl mx-auto p-4 w-full my-auto hidden">
         
-        <!-- Navbar Navigasi Tab Dashboard -->
+        <!-- Navbar Navigasi Tab Dashboard (3 TAB) -->
         <div class="flex justify-between items-center mb-6 no-print bg-white p-4 rounded-xl shadow-md">
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 <button onclick="switchAdminTab('iuran')" id="tabBtnIuran" class="px-4 py-2 rounded-lg font-semibold text-xs bg-emerald-600 text-white transition cursor-pointer">
                     <i class="fa-solid fa-file-invoice-dollar mr-1"></i> Rekap Iuran Warga
                 </button>
                 <button onclick="switchAdminTab('pengaduan')" id="tabBtnPengaduan" class="px-4 py-2 rounded-lg font-semibold text-xs bg-gray-200 text-gray-700 transition cursor-pointer">
                     <i class="fa-solid fa-bullhorn mr-1"></i> Pengaduan Warga
+                </button>
+                <button onclick="switchAdminTab('saldokas')" id="tabBtnSaldoKas" class="px-4 py-2 rounded-lg font-semibold text-xs bg-gray-200 text-gray-700 transition cursor-pointer">
+                    <i class="fa-solid fa-wallet mr-1"></i> Kelola Saldo Kas
                 </button>
             </div>
             <button onclick="tutupDashboard()" class="bg-gray-500 hover:bg-gray-600 text-white text-xs px-4 py-2 rounded-lg transition font-medium cursor-pointer">
@@ -186,7 +197,7 @@
             </button>
         </div>
 
-        <!-- TAB 1: REKAP IURAN -->
+        <!-- TAB 1: REKAP IURAN WARGA -->
         <div id="dash-iuran" class="bg-white rounded-xl shadow-md p-6 mb-8">
             <div id="printable-iuran">
                 <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
@@ -271,9 +282,96 @@
             </div>
         </div>
 
+        <!-- TAB 3: KELOLA SALDO KAS -->
+        <div id="dash-saldokas" class="bg-white rounded-xl shadow-md p-6 mb-8 hidden">
+            <div id="printable-saldokas">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-emerald-800 flex items-center gap-2">
+                            <i class="fa-solid fa-wallet text-emerald-600"></i> Pengaturan & Pencatatan Saldo Kas Manual
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">
+                            Catat sumbangan, kas fisik, atau penerimaan manual beserta nama penyerahnya.
+                        </p>
+                        <p class="text-xs text-emerald-700 font-semibold mt-1" id="reportSubTitleKas">Periode: Semua Bulan</p>
+                    </div>
+                    
+                    <!-- FILTER BULAN KAS + TOMBOL DOWNLOAD PDF -->
+                    <div class="flex flex-wrap gap-2 no-print">
+                        <select id="filterBulanKas" onchange="tampilkanSaldo()" class="text-xs border rounded-lg px-3 py-2 bg-gray-50 font-medium outline-none">
+                            <option value="Semua">Semua Bulan</option>
+                        </select>
+                        <button onclick="downloadPDF()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded-lg transition font-medium cursor-pointer flex items-center gap-1">
+                            <i class="fa-solid fa-file-pdf"></i> Download PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FORM TAMBAH KAS MANUAL -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-6 no-print space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-semibold text-emerald-900 mb-1">Untuk Bulan</label>
+                            <select id="bulanKasManual" class="w-full border border-emerald-300 rounded-lg px-3 py-2 text-xs bg-white text-gray-800 outline-none focus:ring-2 focus:ring-emerald-500">
+                                <!-- Opsi Bulan Dinamis -->
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-semibold text-emerald-900 mb-1">Nominal Uang Kas (Rp)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-semibold text-gray-500">Rp</span>
+                                <input type="number" id="inputManualSaldo" placeholder="10000" class="w-full border border-emerald-300 rounded-lg pl-9 pr-3 py-2 text-sm bg-white font-semibold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-6">
+                            <label class="block text-xs font-semibold text-emerald-900 mb-1">Keterangan / Nama Penyerah Uang</label>
+                            <input type="text" id="inputKetSaldo" placeholder="Contoh: Budi ngasih uang 10rb untuk kas" class="w-full border border-emerald-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-800 outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                        <div class="md:col-span-9">
+                            <label class="block text-xs font-semibold text-emerald-900 mb-1">Upload Foto Bukti (Opsional)</label>
+                            <input type="file" id="buktiKasManualFile" accept="image/*" class="w-full border border-emerald-300 rounded-lg px-3 py-1.5 text-xs bg-white text-gray-800 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
+                        </div>
+
+                        <div class="md:col-span-3">
+                            <button onclick="tambahKasManual()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2.5 rounded-lg font-semibold shadow transition cursor-pointer flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-plus"></i> Tambah Kas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABEL RIWAYAT KAS MANUAL -->
+                <div>
+                    <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-600"></i> Rincian Pencatatan Kas Manual
+                    </h3>
+                    <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                        <table class="w-full text-left text-sm border-collapse">
+                            <thead class="bg-slate-100 text-slate-700 font-semibold border-b">
+                                <tr>
+                                    <th class="p-3">Waktu Pencatatan</th>
+                                    <th class="p-3">Periode Bulan</th>
+                                    <th class="p-3">Keterangan / Nama Penyerah</th>
+                                    <th class="p-3">Nominal Uang</th>
+                                    <th class="p-3 text-center no-print">Foto Bukti</th>
+                                    <th class="p-3 text-center no-print">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelKasManualBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
-    <!-- MODAL PREVIEW GAMBAR UTUH -->
+    <!-- MODAL PREVIEW GAMBAR -->
     <div id="imageModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50" onclick="closeModal()">
         <div class="bg-white p-3 rounded-xl max-w-lg w-full relative shadow-2xl" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-2 pb-2 border-b">
@@ -286,11 +384,11 @@
 
     <!-- Footer -->
     <footer class="text-center py-4 text-xs text-gray-500 no-print">
-        &copy; 2026 Gang Kadeudeuh by <a href="https://muktijasaweb.com" target="_blank" class="text-blue-500 hover:underline">muktijasaweb.com</a>
+        &copy; 2026 Gang Kadeudeuh by muktijasaweb.com
     </footer>
 
+    <!-- SKRIP UTAMA -->
     <script>
-        // Kredensial Fonnte & Target ID Grup WhatsApp Warga
         const FONNTE_TOKEN = "RV12hvyeeNLfa9iUnowW";
         const FONNTE_SENDER = "6288709656799";
         const FONNTE_TARGET = "120363044627819543@g.us";
@@ -303,48 +401,247 @@
             
             const selectForm = document.getElementById('bulan');
             const selectFilter = document.getElementById('filterBulan');
+            const selectFilterKas = document.getElementById('filterBulanKas');
+            const selectBulanKasManual = document.getElementById('bulanKasManual');
             
-            selectForm.innerHTML = '';
+            if (selectForm) selectForm.innerHTML = '';
+            if (selectFilter) selectFilter.innerHTML = '<option value="Semua">Semua Bulan</option>';
+            if (selectFilterKas) selectFilterKas.innerHTML = '<option value="Semua">Semua Bulan</option>';
+            if (selectBulanKasManual) selectBulanKasManual.innerHTML = '';
             
             for (let tahun = 2026; tahun <= 2028; tahun++) {
-                let mulaiBulan = (tahun === 2026) ? 10 : 0; // Mulai November 2026
+                // Diubah mulai dari index 9 (Oktober) untuk tahun 2026
+                let mulaiBulan = (tahun === 2026) ? 9 : 0;
                 for (let b = mulaiBulan; b < 12; b++) {
                     let namaPeriode = `${listBulan[b]} ${tahun}`;
                     
-                    let opt1 = document.createElement('option');
-                    opt1.value = namaPeriode;
-                    opt1.text = namaPeriode;
-                    selectForm.appendChild(opt1);
+                    if (selectForm) {
+                        let opt1 = document.createElement('option');
+                        opt1.value = namaPeriode;
+                        opt1.text = namaPeriode;
+                        selectForm.appendChild(opt1);
+                    }
 
-                    let opt2 = document.createElement('option');
-                    opt2.value = namaPeriode;
-                    opt2.text = namaPeriode;
-                    selectFilter.appendChild(opt2);
+                    if (selectFilter) {
+                        let opt2 = document.createElement('option');
+                        opt2.value = namaPeriode;
+                        opt2.text = namaPeriode;
+                        selectFilter.appendChild(opt2);
+                    }
+
+                    if (selectFilterKas) {
+                        let opt3 = document.createElement('option');
+                        opt3.value = namaPeriode;
+                        opt3.text = namaPeriode;
+                        selectFilterKas.appendChild(opt3);
+                    }
+
+                    if (selectBulanKasManual) {
+                        let opt4 = document.createElement('option');
+                        opt4.value = namaPeriode;
+                        opt4.text = namaPeriode;
+                        selectBulanKasManual.appendChild(opt4);
+                    }
                 }
             }
+
+            // Hitung dan tampilkan total saldo kas saat web dibuka
+            tampilkanSaldo();
         });
 
-        // Switch Tab Admin
-        function switchAdminTab(tab) {
-            const btnIuran = document.getElementById('tabBtnIuran');
-            const btnPengaduan = document.getElementById('tabBtnPengaduan');
-            const contentIuran = document.getElementById('dash-iuran');
-            const contentPengaduan = document.getElementById('dash-pengaduan');
+        // FUNGSI TAMPILKAN TOTAL SALDO & TABEL KAS MANUAL
+        function tampilkanSaldo() {
+            const listKasManual = JSON.parse(localStorage.getItem('kas_manual_list')) || [];
+            const dataIuran = JSON.parse(localStorage.getItem('iuran_sampah_data')) || [];
+            const filterBulanKas = document.getElementById('filterBulanKas') ? document.getElementById('filterBulanKas').value : 'Semua';
+            const reportSubTitleKas = document.getElementById('reportSubTitleKas');
 
-            if (tab === 'iuran') {
-                btnIuran.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-emerald-600 text-white transition cursor-pointer";
-                btnPengaduan.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-gray-200 text-gray-700 transition cursor-pointer";
-                contentIuran.classList.remove('hidden');
-                contentPengaduan.classList.add('hidden');
+            if (reportSubTitleKas) {
+                reportSubTitleKas.innerText = `Periode: ${filterBulanKas}`;
+            }
+
+            // 1. Hitung kas dari iuran lunas
+            let totalKasIuran = 0;
+            dataIuran.forEach(item => {
+                if (item.status === 'Lunas / Terverifikasi') {
+                    totalKasIuran += Number(item.nominal || 0);
+                }
+            });
+
+            // 2. Hitung kas dari pencatatan manual
+            let totalKasManual = 0;
+            listKasManual.forEach(item => {
+                totalKasManual += Number(item.nominal || 0);
+            });
+
+            // Total Keseluruhan
+            const totalSaldoKas = totalKasIuran + totalKasManual;
+
+            const headerSaldo = document.getElementById('headerSaldo');
+            if (headerSaldo) {
+                headerSaldo.innerText = `Rp ${totalSaldoKas.toLocaleString('id-ID')}`;
+            }
+
+            // Filter Riwayat Kas Manual sesuai Bulan
+            const filteredKasManual = listKasManual.filter(item => {
+                if (filterBulanKas === 'Semua') return true;
+                return (item.bulan || '') === filterBulanKas;
+            });
+
+            // Render Tabel Riwayat Kas Manual di Admin
+            renderTabelKasManual(filteredKasManual);
+        }
+
+        // RENDER TABEL RIWAYAT KAS MANUAL
+        function renderTabelKasManual(list) {
+            const tbody = document.getElementById('tabelKasManualBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400 italic">Belum ada pencatatan kas manual untuk periode ini.</td></tr>`;
+                return;
+            }
+
+            list.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 text-xs text-gray-500">${item.waktu}</td>
+                    <td class="p-3 font-semibold text-emerald-800">${item.bulan || '-'}</td>
+                    <td class="p-3 font-medium text-gray-800">${item.keterangan}</td>
+                    <td class="p-3 font-bold text-emerald-700">Rp ${Number(item.nominal).toLocaleString('id-ID')}</td>
+                    <td class="p-3 text-center no-print">
+                        ${item.image ? `<button onclick="openModal('${item.image}')" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer"><i class="fa-solid fa-eye"></i> Lihat Bukti</button>` : `<span class="text-xs text-gray-400">-</span>`}
+                    </td>
+                    <td class="p-3 text-center no-print">
+                        <button onclick="hapusKasManual(${index})" class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition" title="Hapus Catatan">
+                            <i class="fa-solid fa-trash mr-1"></i> Hapus
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // FUNGSI TAMBAH KAS MANUAL
+        function tambahKasManual() {
+            const inputNominal = document.getElementById('inputManualSaldo');
+            const inputKet = document.getElementById('inputKetSaldo');
+            const selectBulanKasManual = document.getElementById('bulanKasManual');
+            const fileInput = document.getElementById('buktiKasManualFile');
+
+            const nominal = Number(inputNominal.value);
+            const keterangan = inputKet.value.trim();
+            const bulan = selectBulanKasManual ? selectBulanKasManual.value : '';
+
+            if (!nominal || nominal <= 0) {
+                alert('Silakan masukkan nominal uang kas yang valid.');
+                return;
+            }
+
+            if (!keterangan) {
+                alert('Silakan masukkan keterangan / nama warga (contoh: Budi ngasih uang 10rb untuk kas).');
+                return;
+            }
+
+            const simpanData = (base64Img) => {
+                const newRecord = {
+                    waktu: new Date().toLocaleString('id-ID'),
+                    bulan: bulan,
+                    nominal: nominal,
+                    keterangan: keterangan,
+                    image: base64Img || null
+                };
+
+                let listKasManual = JSON.parse(localStorage.getItem('kas_manual_list')) || [];
+                listKasManual.unshift(newRecord);
+                localStorage.setItem('kas_manual_list', JSON.stringify(listKasManual));
+
+                // Reset Input
+                inputNominal.value = '';
+                inputKet.value = '';
+                fileInput.value = '';
+
+                tampilkanSaldo();
+                alert('Pencatatan kas manual berhasil disimpan!');
+            };
+
+            if (fileInput && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    simpanData(e.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
             } else {
-                btnPengaduan.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-amber-600 text-white transition cursor-pointer";
-                btnIuran.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-gray-200 text-gray-700 transition cursor-pointer";
-                contentPengaduan.classList.remove('hidden');
-                contentIuran.classList.add('hidden');
+                simpanData(null);
             }
         }
 
-        // SUBMIT FORM PEMBAYARAN
+        // FUNGSI HAPUS KAS MANUAL
+        function hapusKasManual(index) {
+            if (confirm('Apakah Anda yakin ingin menghapus catatan kas ini?')) {
+                let listKasManual = JSON.parse(localStorage.getItem('kas_manual_list')) || [];
+                listKasManual.splice(index, 1);
+                localStorage.setItem('kas_manual_list', JSON.stringify(listKasManual));
+                tampilkanSaldo();
+            }
+        }
+
+        // HANYA TERIMA "admxyz123". PIN "1234" DITOLAK MUTLAK!
+        function bukaDashboard() {
+            let pinInput = prompt("Masukkan PIN Akses Pengurus:");
+            if (pinInput === null) return;
+
+            let pin = pinInput.trim();
+
+            if (pin === "admxyz123") {
+                document.getElementById('section-form').classList.add('hidden');
+                document.getElementById('section-dashboard').classList.remove('hidden');
+                loadDashboardData();
+            } else {
+                alert("PIN salah! Akses ditolak.");
+            }
+        }
+
+        function tutupDashboard() {
+            document.getElementById('section-dashboard').classList.add('hidden');
+            document.getElementById('section-form').classList.remove('hidden');
+            tampilkanSaldo();
+        }
+
+        // SWAP TAB ADMIN (3 TAB)
+        function switchAdminTab(tab) {
+            const btnIuran = document.getElementById('tabBtnIuran');
+            const btnPengaduan = document.getElementById('tabBtnPengaduan');
+            const btnSaldoKas = document.getElementById('tabBtnSaldoKas');
+
+            const contentIuran = document.getElementById('dash-iuran');
+            const contentPengaduan = document.getElementById('dash-pengaduan');
+            const contentSaldoKas = document.getElementById('dash-saldokas');
+
+            // Reset Kelas Semua Tombol
+            btnIuran.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-gray-200 text-gray-700 transition cursor-pointer";
+            btnPengaduan.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-gray-200 text-gray-700 transition cursor-pointer";
+            btnSaldoKas.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-gray-200 text-gray-700 transition cursor-pointer";
+
+            // Sembunyikan Semua Tab
+            contentIuran.classList.add('hidden');
+            contentPengaduan.classList.add('hidden');
+            contentSaldoKas.classList.add('hidden');
+
+            if (tab === 'iuran') {
+                btnIuran.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-emerald-600 text-white transition cursor-pointer";
+                contentIuran.classList.remove('hidden');
+            } else if (tab === 'pengaduan') {
+                btnPengaduan.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-amber-600 text-white transition cursor-pointer";
+                contentPengaduan.classList.remove('hidden');
+            } else if (tab === 'saldokas') {
+                btnSaldoKas.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-emerald-700 text-white transition cursor-pointer";
+                contentSaldoKas.classList.remove('hidden');
+            }
+        }
+
         function submitForm(event) {
             event.preventDefault();
             const btn = document.getElementById('submitBtn');
@@ -399,7 +696,6 @@
             reader.readAsDataURL(fileInput.files[0]);
         }
 
-        // SUBMIT FORM PENGADUAN
         function submitPengaduan(event) {
             event.preventDefault();
             const btn = document.getElementById('p_submitBtn');
@@ -499,22 +795,6 @@
             }).then(() => { if(callback) callback(); }).catch(() => { if(callback) callback(); });
         }
 
-        function bukaDashboard() {
-            let pin = prompt("Masukkan PIN Akses Pengurus:");
-            if (pin === "1234") {
-                document.getElementById('section-form').classList.add('hidden');
-                document.getElementById('section-dashboard').classList.remove('hidden');
-                loadDashboardData();
-            } else if (pin !== null) {
-                alert("PIN salah!");
-            }
-        }
-
-        function tutupDashboard() {
-            document.getElementById('section-dashboard').classList.add('hidden');
-            document.getElementById('section-form').classList.remove('hidden');
-        }
-
         function getStatusClass(status) {
             if (status === 'Lunas / Terverifikasi' || status === 'Selesai / Ditangani') {
                 return 'bg-emerald-100 text-emerald-800 border-emerald-300';
@@ -528,13 +808,12 @@
         }
 
         function loadDashboardData() {
-            // Load Iuran
             const tbody = document.getElementById('rekapTableBody');
             const emptyState = document.getElementById('emptyState');
-            const filterBulan = document.getElementById('filterBulan').value;
+            const filterBulan = document.getElementById('filterBulan') ? document.getElementById('filterBulan').value : 'Semua';
             const reportSubTitle = document.getElementById('reportSubTitle');
             
-            reportSubTitle.innerText = `Periode: ${filterBulan}`;
+            if (reportSubTitle) reportSubTitle.innerText = `Periode: ${filterBulan}`;
             const data = JSON.parse(localStorage.getItem('iuran_sampah_data')) || [];
 
             const filteredData = data.filter(item => {
@@ -542,42 +821,45 @@
                 return item.bulan === filterBulan;
             });
 
-            tbody.innerHTML = '';
-            if (filteredData.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                filteredData.forEach((item) => {
-                    const originalIndex = data.findIndex(d => d.timestamp === item.timestamp && d.blok === item.blok && d.nomor === item.nomor);
-                    const currentStatus = item.status || 'Menunggu Verifikasi';
-                    const statusClass = getStatusClass(currentStatus);
+            if (tbody) {
+                tbody.innerHTML = '';
+                if (filteredData.length === 0) {
+                    if (emptyState) emptyState.classList.remove('hidden');
+                } else {
+                    if (emptyState) emptyState.classList.add('hidden');
+                    filteredData.forEach((item) => {
+                        const originalIndex = data.findIndex(d => d.timestamp === item.timestamp && d.blok === item.blok && d.nomor === item.nomor);
+                        const currentStatus = item.status || 'Menunggu Verifikasi';
+                        const statusClass = getStatusClass(currentStatus);
 
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b hover:bg-slate-50 transition";
-                    tr.innerHTML = `
-                        <td class="p-3 text-xs text-gray-500">${item.timestamp}</td>
-                        <td class="p-3 font-semibold text-slate-800">Blok ${item.blok} / ${item.nomor}</td>
-                        <td class="p-3 font-medium">${item.bulan}</td>
-                        <td class="p-3 font-semibold text-emerald-700">Rp ${Number(item.nominal).toLocaleString('id-ID')}</td>
-                        <td class="p-3">${item.keterangan}</td>
-                        <td class="p-3 text-center no-print">
-                            <button onclick="openModal('${item.image}')" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 mx-auto transition cursor-pointer">
-                                <i class="fa-solid fa-eye"></i> Lihat Bukti
-                            </button>
-                        </td>
-                        <td class="p-3 text-center">
-                            <select onchange="updateStatus(${originalIndex}, this.value)" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer transition ${statusClass}">
-                                <option value="Menunggu Verifikasi" ${currentStatus === 'Menunggu Verifikasi' ? 'selected' : ''}>⏳ Menunggu Verifikasi</option>
-                                <option value="Lunas / Terverifikasi" ${currentStatus === 'Lunas / Terverifikasi' ? 'selected' : ''}>✅ Lunas / Terverifikasi</option>
-                            </select>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b hover:bg-slate-50 transition";
+                        tr.innerHTML = `
+                            <td class="p-3 text-xs text-gray-500">${item.timestamp}</td>
+                            <td class="p-3 font-semibold text-slate-800">Blok ${item.blok} / ${item.nomor}</td>
+                            <td class="p-3 font-medium">${item.bulan}</td>
+                            <td class="p-3 font-semibold text-emerald-700">Rp ${Number(item.nominal).toLocaleString('id-ID')}</td>
+                            <td class="p-3">${item.keterangan}</td>
+                            <td class="p-3 text-center no-print">
+                                <button onclick="openModal('${item.image}')" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 mx-auto transition cursor-pointer">
+                                    <i class="fa-solid fa-eye"></i> Lihat Bukti
+                                </button>
+                            </td>
+                            <td class="p-3 text-center">
+                                <select onchange="updateStatus(${originalIndex}, this.value)" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer transition ${statusClass}">
+                                    <option value="Menunggu Verifikasi" ${currentStatus === 'Menunggu Verifikasi' ? 'selected' : ''}>⏳ Menunggu Verifikasi</option>
+                                    <option value="Lunas / Terverifikasi" ${currentStatus === 'Lunas / Terverifikasi' ? 'selected' : ''}>✅ Lunas / Terverifikasi</option>
+                                    <option value="Ditolak" ${currentStatus === 'Ditolak' ? 'selected' : ''}>❌ Ditolak</option>
+                                </select>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
             }
 
-            // Load Pengaduan
             loadPengaduanData();
+            tampilkanSaldo();
         }
 
         function loadPengaduanData() {
@@ -585,38 +867,40 @@
             const emptyState = document.getElementById('emptyPengaduanState');
             const data = JSON.parse(localStorage.getItem('iuran_pengaduan_data')) || [];
 
-            tbody.innerHTML = '';
-            if (data.length === 0) {
-                emptyState.classList.remove('hidden');
-                return;
+            if (tbody) {
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    if (emptyState) emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                if (emptyState) emptyState.classList.add('hidden');
+                data.forEach((item, index) => {
+                    const currentStatus = item.status || 'Belum Diproses';
+                    const statusClass = getStatusClass(currentStatus);
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b hover:bg-slate-50 transition";
+                    tr.innerHTML = `
+                        <td class="p-3 text-xs text-gray-500">${item.timestamp}</td>
+                        <td class="p-3 font-semibold text-slate-800">Blok ${item.blok} / ${item.nomor}</td>
+                        <td class="p-3 font-medium">${item.nama}</td>
+                        <td class="p-3"><span class="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded font-medium">${item.kategori}</span></td>
+                        <td class="p-3 max-w-xs text-xs">${item.detail}</td>
+                        <td class="p-3 text-center no-print">
+                            ${item.image ? `<button onclick="openModal('${item.image}')" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 px-3 py-1 rounded text-xs font-semibold cursor-pointer"><i class="fa-solid fa-eye"></i> Foto</button>` : `<span class="text-xs text-gray-400">-</span>`}
+                        </td>
+                        <td class="p-3 text-center">
+                            <select onchange="updatePengaduanStatus(${index}, this.value)" class="text-xs font-semibold px-2 py-1 rounded-lg border outline-none cursor-pointer transition ${statusClass}">
+                                <option value="Belum Diproses" ${currentStatus === 'Belum Diproses' ? 'selected' : ''}>⏳ Belum Diproses</option>
+                                <option value="Sedang Diproses" ${currentStatus === 'Sedang Diproses' ? 'selected' : ''}>🛠️ Sedang Diproses</option>
+                                <option value="Selesai / Ditangani" ${currentStatus === 'Selesai / Ditangani' ? 'selected' : ''}>✅ Selesai / Ditangani</option>
+                            </select>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
             }
-
-            emptyState.classList.add('hidden');
-            data.forEach((item, index) => {
-                const currentStatus = item.status || 'Belum Diproses';
-                const statusClass = getStatusClass(currentStatus);
-
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-slate-50 transition";
-                tr.innerHTML = `
-                    <td class="p-3 text-xs text-gray-500">${item.timestamp}</td>
-                    <td class="p-3 font-semibold text-slate-800">Blok ${item.blok} / ${item.nomor}</td>
-                    <td class="p-3 font-medium">${item.nama}</td>
-                    <td class="p-3"><span class="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded font-medium">${item.kategori}</span></td>
-                    <td class="p-3 max-w-xs text-xs">${item.detail}</td>
-                    <td class="p-3 text-center no-print">
-                        ${item.image ? `<button onclick="openModal('${item.image}')" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 px-3 py-1 rounded text-xs font-semibold cursor-pointer"><i class="fa-solid fa-eye"></i> Foto</button>` : `<span class="text-xs text-gray-400">-</span>`}
-                    </td>
-                    <td class="p-3 text-center">
-                        <select onchange="updatePengaduanStatus(${index}, this.value)" class="text-xs font-semibold px-2 py-1 rounded-lg border outline-none cursor-pointer transition ${statusClass}">
-                            <option value="Belum Diproses" ${currentStatus === 'Belum Diproses' ? 'selected' : ''}>⏳ Belum Diproses</option>
-                            <option value="Sedang Diproses" ${currentStatus === 'Sedang Diproses' ? 'selected' : ''}>🛠️ Sedang Diproses</option>
-                            <option value="Selesai / Ditangani" ${currentStatus === 'Selesai / Ditangani' ? 'selected' : ''}>✅ Selesai / Ditangani</option>
-                        </select>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
         }
 
         function updateStatus(index, newStatus) {
@@ -638,7 +922,6 @@
         }
 
         function downloadPDF() {
-            // Hanya mencetak tabel rekap iuran warga saja
             window.print();
         }
 
