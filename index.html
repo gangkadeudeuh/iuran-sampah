@@ -388,7 +388,7 @@
 </footer>
 
     <!-- SKRIP UTAMA -->
- <script>
+<script>
         const FONNTE_TOKEN = "RV12hvyeeNLfa9iUnowM";
         const FONNTE_SENDER = "6288709656799";
         const FONNTE_TARGET = "128363044627819543@g.us";
@@ -449,11 +449,9 @@
                 }
             }
 
-            // Muat Data dari Cloud Online
             loadCloudData();
         });
 
-        // FUNGSI MEMUAT DATA DARI CLOUD
         async function fetchCloudData() {
             try {
                 const response = await fetch(JSONBIN_URL, {
@@ -461,14 +459,27 @@
                     headers: { 'X-Master-Key': JSONBIN_API_KEY }
                 });
                 const json = await response.json();
-                return json.record || { iuran: [], pengaduan: [], kas_manual: [] };
+                if (json && json.record) {
+                    return json.record;
+                }
             } catch (e) {
                 console.error("Gagal mengambil data dari cloud:", e);
-                return { iuran: [], pengaduan: [], kas_manual: [] };
             }
+            return {
+                iuran: [],
+                pengaduan: [],
+                kas_manual: [
+                    {
+                        "waktu": "18/10/2026, 17.03.03",
+                        "bulan": "Oktober 2026",
+                        "nominal": 500000,
+                        "keterangan": "Bapaknya mas anwar baru kirim 500rb, kekurangannya 1.800.000 akan dibayarkan akhir bulan 11 2026",
+                        "image": "WhatsApp Image 2026-10-18 at 17.23.10.jpeg"
+                    }
+                ]
+            };
         }
 
-        // FUNGSI MENYIMPAN KE CLOUD
         async function updateCloudData(fullData) {
             try {
                 await fetch(JSONBIN_URL, {
@@ -639,7 +650,7 @@
                 });
             };
 
-            if (fileInput.files[0]) {
+            if (fileInput && fileInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     saveAndUpload(e.target.result);
@@ -692,7 +703,7 @@
                 });
             };
 
-            if (fileInput.files[0]) {
+            if (fileInput && fileInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     saveAndNotify(e.target.result);
