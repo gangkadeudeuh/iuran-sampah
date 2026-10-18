@@ -389,14 +389,14 @@
 
     <!-- SKRIP UTAMA -->
  <script>
-    // CONFIG DATABASE CLOUD ONLINE (JSONBin)
-const JSONBIN_BIN_ID = "6ad4e102ffd5d16053761501"; 
-const JSONBIN_API_KEY = "$2a$10$QXMZ/9s9/Xkc896oiDWWJ.QYFZ7Uiu75.BPq108flDNFyWH8AKRaS"; 
-const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
-
         const FONNTE_TOKEN = "RV12hvyeeNLfa9iUnowM";
         const FONNTE_SENDER = "6288709656799";
         const FONNTE_TARGET = "128363044627819543@g.us";
+
+        // CONFIG DATABASE CLOUD ONLINE (JSONBin)
+        const JSONBIN_BIN_ID = "6ad4e102ffd5d16053761501";
+        const JSONBIN_API_KEY = "$2a$10$QXMZ/9s9/Xkc896oiDWWJ.QYFZ7Uiu75.BPq108flDNFyWH8AKRaS";
+        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
         document.addEventListener('DOMContentLoaded', function() {
             const listBulan = [
@@ -449,55 +449,52 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
                 }
             }
 
-            // 1. Muat data iuran & pengaduan dari localStorage
-            loadDashboardData();
-            loadPengaduanData();
-
-            // 2. Sinkronkan data kas_manual dari database.json jika tersedia
-            fetch('database.json')
-                .then(response => {
-                    if (response.ok) return response.json();
-                    throw new Error('Gagal memuat database.json');
-                })
-                .then(data => {
-                    if (data.kas_manual && data.kas_manual.length > 0) {
-                        localStorage.setItem('kas_manual_list', JSON.stringify(data.kas_manual));
-                    }
-                    tampilkanSaldo();
-                })
-                .catch(err => {
-                    console.log("Memuat kas manual dari penyimpanan lokal:", err);
-                    tampilkanSaldo();
-                });
+            // Muat Data dari Cloud Online
+            loadCloudData();
         });
 
-        // FUNGSI TAMPILKAN TOTAL SALDO & TABEL KAS MANUAL
-        function tampilkanSaldo() {
-            const defaultKasManual = [
-                {
-                    "waktu": "18/10/2026, 17.03.03",
-                    "bulan": "Oktober 2026",
-                    "nominal": 500000,
-                    "keterangan": "Bapaknya mas anwar baru kirim 500rb, kekurangannya 1.800.000 akan dibayarkan akhir bulan 11 2026",
-                    "image": "WhatsApp Image 2026-10-18 at 17.23.10.jpeg"
-                }
-            ];
-
-            let listKasManual = JSON.parse(localStorage.getItem('kas_manual_list'));
-            if (!listKasManual || listKasManual.length === 0) {
-                listKasManual = defaultKasManual;
-                localStorage.setItem('kas_manual_list', JSON.stringify(defaultKasManual));
+        // FUNGSI MEMUAT DATA DARI CLOUD
+        async function fetchCloudData() {
+            try {
+                const response = await fetch(JSONBIN_URL, {
+                    method: 'GET',
+                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                });
+                const json = await response.json();
+                return json.record || { iuran: [], pengaduan: [], kas_manual: [] };
+            } catch (e) {
+                console.error("Gagal mengambil data dari cloud:", e);
+                return { iuran: [], pengaduan: [], kas_manual: [] };
             }
+        }
 
-            const dataIuran = JSON.parse(localStorage.getItem('iuran_sampah_data')) || [];
-            const filterBulanKas = document.getElementById('filterBulanKas') ? document.getElementById('filterBulanKas').value : 'Semua';
-            const reportSubTitleKas = document.getElementById('reportSubTitleKas');
-
-            if (reportSubTitleKas) {
-                reportSubTitleKas.innerText = `Periode: ${filterBulanKas}`;
+        // FUNGSI MENYIMPAN KE CLOUD
+        async function updateCloudData(fullData) {
+            try {
+                await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify(fullData)
+                });
+            } catch (e) {
+                console.error("Gagal update data ke cloud:", e);
             }
+        }
 
-            // 1. Hitung kas dari iuran lunas
+        async function loadCloudData() {
+            const data = await fetchCloudData();
+            renderTabelIuran(data.iuran || []);
+            renderTabelPengaduan(data.pengaduan || []);
+            renderKasSaldo(data);
+        }
+
+        function renderKasSaldo(data) {
+            const listKasManual = data.kas_manual || [];
+            const dataIuran = data.iuran || [];
+
             let totalKasIuran = 0;
             dataIuran.forEach(item => {
                 if (item.status === 'Lunas / Terverifikasi') {
@@ -505,19 +502,18 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
                 }
             });
 
-            // 2. Hitung kas dari pencatatan manual
             let totalKasManual = 0;
             listKasManual.forEach(item => {
                 totalKasManual += Number(item.nominal || 0);
             });
 
             const totalSaldoKas = totalKasIuran + totalKasManual;
-
             const headerSaldo = document.getElementById('headerSaldo');
             if (headerSaldo) {
                 headerSaldo.innerText = `Rp ${totalSaldoKas.toLocaleString('id-ID')}`;
             }
 
+            const filterBulanKas = document.getElementById('filterBulanKas') ? document.getElementById('filterBulanKas').value : 'Semua';
             const filteredKasManual = listKasManual.filter(item => {
                 if (filterBulanKas === 'Semua') return true;
                 return (item.bulan || '') === filterBulanKas;
@@ -526,7 +522,6 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
             renderTabelKasManual(filteredKasManual);
         }
 
-        // RENDER TABEL RIWAYAT KAS MANUAL
         function renderTabelKasManual(list) {
             const tbody = document.getElementById('tabelKasManualBody');
             if (!tbody) return;
@@ -558,65 +553,268 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
             });
         }
 
-        // FUNGSI TAMBAH KAS MANUAL
-        function tambahKasManual() {
+        async function tambahKasManual() {
             const inputNominal = document.getElementById('inputManualSaldo');
             const inputKet = document.getElementById('inputKetSaldo');
             const selectBulanKasManual = document.getElementById('bulanKasManual');
-            const fileInput = document.getElementById('buktiKasManualFile');
 
             const nominal = Number(inputNominal.value);
             const keterangan = inputKet.value.trim();
             const bulan = selectBulanKasManual ? selectBulanKasManual.value : '';
 
-            if (!nominal || nominal <= 0) {
-                alert('Silakan masukkan nominal uang kas yang valid.');
+            if (!nominal || nominal <= 0 || !keterangan) {
+                alert('Silakan lengkapi nominal dan keterangan.');
                 return;
             }
 
-            if (!keterangan) {
-                alert('Silakan masukkan keterangan / nama warga.');
-                return;
-            }
-
-            const simpanData = (base64Img) => {
-                const newRecord = {
-                    waktu: new Date().toLocaleString('id-ID'),
-                    bulan: bulan,
-                    nominal: nominal,
-                    keterangan: keterangan,
-                    image: base64Img || null
-                };
-
-                let listKasManual = JSON.parse(localStorage.getItem('kas_manual_list')) || [];
-                listKasManual.unshift(newRecord);
-                localStorage.setItem('kas_manual_list', JSON.stringify(listKasManual));
-
-                inputNominal.value = '';
-                inputKet.value = '';
-                if (fileInput) fileInput.value = '';
-
-                tampilkanSaldo();
-                alert('Pencatatan kas manual berhasil disimpan!');
+            const newRecord = {
+                waktu: new Date().toLocaleString('id-ID'),
+                bulan: bulan,
+                nominal: nominal,
+                keterangan: keterangan,
+                image: null
             };
 
-            if (fileInput && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    simpanData(e.target.result);
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                simpanData(null);
+            const dbData = await fetchCloudData();
+            dbData.kas_manual = dbData.kas_manual || [];
+            dbData.kas_manual.unshift(newRecord);
+
+            await updateCloudData(dbData);
+
+            inputNominal.value = '';
+            inputKet.value = '';
+            loadCloudData();
+            alert('Kas manual berhasil ditambahkan dan tersimpan online!');
+        }
+
+        async function hapusKasManual(index) {
+            if (confirm('Apakah Anda yakin ingin menghapus catatan kas manual ini?')) {
+                const dbData = await fetchCloudData();
+                if (dbData.kas_manual && dbData.kas_manual[index]) {
+                    dbData.kas_manual.splice(index, 1);
+                    await updateCloudData(dbData);
+                    loadCloudData();
+                }
             }
         }
 
-        function hapusKasManual(index) {
-            if (confirm('Apakah Anda yakin ingin menghapus catatan kas manual ini?')) {
-                let listKasManual = JSON.parse(localStorage.getItem('kas_manual_list')) || [];
-                listKasManual.splice(index, 1);
-                localStorage.setItem('kas_manual_list', JSON.stringify(listKasManual));
-                tampilkanSaldo();
+        async function submitForm(event) {
+            event.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan ke Cloud & Mengirim WA...';
+
+            const blok = document.getElementById('blok').value.trim();
+            const nomor = document.getElementById('nomor').value.trim();
+            const bulan = document.getElementById('bulan').value;
+            const nominal = Number(document.getElementById('nominal').value);
+            const keterangan = document.getElementById('keterangan').value.trim();
+            const fileInput = document.getElementById('buktiFile');
+
+            const timestamp = new Date().toLocaleString('id-ID');
+
+            const saveAndUpload = (base64Image) => {
+                const newData = {
+                    timestamp,
+                    blok,
+                    nomor,
+                    bulan,
+                    nominal,
+                    keterangan,
+                    image: base64Image || "",
+                    status: 'Menunggu Verifikasi'
+                };
+
+                fetchCloudData().then(dbData => {
+                    dbData.iuran = dbData.iuran || [];
+                    dbData.iuran.unshift(newData);
+                    updateCloudData(dbData).then(() => {
+                        sendWhatsAppNotification(newData, function() {
+                            alert('Terima kasih! Konfirmasi iuran Anda berhasil disimpan otomatis ke cloud.');
+                            document.getElementById('iuranForm').reset();
+                            resetButton(btn);
+                            loadCloudData();
+                        });
+                    });
+                });
+            };
+
+            if (fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveAndUpload(e.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                saveAndUpload("");
+            }
+        }
+
+        async function submitPengaduan(event) {
+            event.preventDefault();
+            const btn = document.getElementById('p_submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Mengirim Pengaduan...';
+
+            const blok = document.getElementById('p_blok').value;
+            const nomor = document.getElementById('p_nomor').value.trim();
+            const nama = document.getElementById('p_nama').value.trim();
+            const kategori = document.getElementById('p_kategori').value;
+            const detail = document.getElementById('p_detail').value.trim();
+            const fileInput = document.getElementById('p_buktiFile');
+
+            const timestamp = new Date().toLocaleString('id-ID');
+
+            const saveAndNotify = (base64Image) => {
+                const newPengaduan = {
+                    timestamp,
+                    blok,
+                    nomor,
+                    nama,
+                    kategori,
+                    detail,
+                    image: base64Image || null,
+                    status: 'Belum Diproses'
+                };
+
+                fetchCloudData().then(dbData => {
+                    dbData.pengaduan = dbData.pengaduan || [];
+                    dbData.pengaduan.unshift(newPengaduan);
+                    updateCloudData(dbData).then(() => {
+                        sendWaPengaduan(newPengaduan, function() {
+                            alert('Pengaduan Anda berhasil dikirim dan tersimpan di cloud.');
+                            document.getElementById('pengaduanForm').reset();
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Pengaduan';
+                            loadCloudData();
+                        });
+                    });
+                });
+            };
+
+            if (fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveAndNotify(e.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                saveAndNotify(null);
+            }
+        }
+
+        function getStatusClass(status) {
+            if (status === 'Lunas / Terverifikasi' || status === 'Selesai / Ditangani') {
+                return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+            } else if (status === 'Ditolak') {
+                return 'bg-red-100 text-red-800 border-red-300';
+            } else if (status === 'Sedang Diproses') {
+                return 'bg-blue-100 text-blue-800 border-blue-300';
+            } else {
+                return 'bg-amber-100 text-amber-800 border-amber-300';
+            }
+        }
+
+        function renderTabelIuran(data) {
+            const tbody = document.getElementById('rekapTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const filterBulan = document.getElementById('filterBulan') ? document.getElementById('filterBulan').value : 'Semua';
+
+            const filteredData = data.filter(item => {
+                if (filterBulan === 'Semua') return true;
+                return item.bulan === filterBulan;
+            });
+
+            if (tbody) {
+                tbody.innerHTML = '';
+                if (filteredData.length === 0) {
+                    if (emptyState) emptyState.classList.remove('hidden');
+                } else {
+                    if (emptyState) emptyState.classList.add('hidden');
+                    filteredData.forEach((item, originalIndex) => {
+                        const currentStatus = item.status || 'Menunggu Verifikasi';
+                        const statusClass = getStatusClass(currentStatus);
+
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b hover:bg-slate-50 transition";
+                        tr.innerHTML = `
+                            <td class="p-3 text-xs text-gray-500">${item.timestamp}</td>
+                            <td class="p-3 font-semibold text-slate-800">Blok ${item.blok} / ${item.nomor}</td>
+                            <td class="p-3 font-medium">${item.bulan}</td>
+                            <td class="p-3 font-semibold text-emerald-700">Rp ${Number(item.nominal).toLocaleString('id-ID')}</td>
+                            <td class="p-3">${item.keterangan}</td>
+                            <td class="p-3 text-center no-print">
+                                ${item.image ? `<button onclick="openModal('${item.image}')" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 mx-auto transition cursor-pointer"><i class="fa-solid fa-eye"></i> Lihat Bukti</button>` : `<span class="text-xs text-gray-400">-</span>`}
+                            </td>
+                            <td class="p-3 text-center">
+                                <select onchange="updateStatusCloud(${originalIndex}, this.value)" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer transition ${statusClass}">
+                                    <option value="Menunggu Verifikasi" ${currentStatus === 'Menunggu Verifikasi' ? 'selected' : ''}>⏳ Menunggu Verifikasi</option>
+                                    <option value="Lunas / Terverifikasi" ${currentStatus === 'Lunas / Terverifikasi' ? 'selected' : ''}>✅ Lunas / Terverifikasi</option>
+                                    <option value="Ditolak" ${currentStatus === 'Ditolak' ? 'selected' : ''}>❌ Ditolak</option>
+                                </select>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+        }
+
+        function renderTabelPengaduan(data) {
+            const tbody = document.getElementById('pengaduanTableBody');
+            const emptyState = document.getElementById('emptyPengaduanState');
+
+            if (tbody) {
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    if (emptyState) emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                if (emptyState) emptyState.classList.add('hidden');
+                data.forEach((item, index) => {
+                    const currentStatus = item.status || 'Belum Diproses';
+                    const statusClass = getStatusClass(currentStatus);
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b hover:bg-slate-50 transition";
+                    tr.innerHTML = `
+                        <td class="p-3 text-xs text-gray-500">${item.timestamp}</td>
+                        <td class="p-3 font-semibold text-slate-800">Blok ${item.blok} / ${item.nomor}</td>
+                        <td class="p-3 font-medium">${item.nama}</td>
+                        <td class="p-3"><span class="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded font-medium">${item.kategori}</span></td>
+                        <td class="p-3 max-w-xs text-xs">${item.detail}</td>
+                        <td class="p-3 text-center no-print">
+                            ${item.image ? `<button onclick="openModal('${item.image}')" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 px-3 py-1 rounded text-xs font-semibold cursor-pointer"><i class="fa-solid fa-eye"></i> Foto</button>` : `<span class="text-xs text-gray-400">-</span>`}
+                        </td>
+                        <td class="p-3 text-center">
+                            <select onchange="updatePengaduanStatusCloud(${index}, this.value)" class="text-xs font-semibold px-2 py-1 rounded-lg border outline-none cursor-pointer transition ${statusClass}">
+                                <option value="Belum Diproses" ${currentStatus === 'Belum Diproses' ? 'selected' : ''}>⏳ Belum Diproses</option>
+                                <option value="Sedang Diproses" ${currentStatus === 'Sedang Diproses' ? 'selected' : ''}>🛠️ Sedang Diproses</option>
+                                <option value="Selesai / Ditangani" ${currentStatus === 'Selesai / Ditangani' ? 'selected' : ''}>✅ Selesai / Ditangani</option>
+                            </select>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        async function updateStatusCloud(index, newStatus) {
+            const dbData = await fetchCloudData();
+            if (dbData.iuran && dbData.iuran[index]) {
+                dbData.iuran[index].status = newStatus;
+                await updateCloudData(dbData);
+                loadCloudData();
+            }
+        }
+
+        async function updatePengaduanStatusCloud(index, newStatus) {
+            const dbData = await fetchCloudData();
+            if (dbData.pengaduan && dbData.pengaduan[index]) {
+                dbData.pengaduan[index].status = newStatus;
+                await updateCloudData(dbData);
+                loadCloudData();
             }
         }
 
@@ -629,7 +827,7 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
             if (pin === "admxyz123") {
                 document.getElementById('section-form').classList.add('hidden');
                 document.getElementById('section-dashboard').classList.remove('hidden');
-                loadDashboardData();
+                loadCloudData();
             } else {
                 alert("PIN salah! Akses ditolak.");
             }
@@ -638,7 +836,7 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
         function tutupDashboard() {
             document.getElementById('section-dashboard').classList.add('hidden');
             document.getElementById('section-form').classList.remove('hidden');
-            tampilkanSaldo();
+            loadCloudData();
         }
 
         function switchAdminTab(tab) {
@@ -667,110 +865,6 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
             } else if (tab === 'saldokas') {
                 btnSaldoKas.className = "px-4 py-2 rounded-lg font-semibold text-xs bg-emerald-700 text-white transition cursor-pointer";
                 contentSaldoKas.classList.remove('hidden');
-            }
-        }
-
-        function submitForm(event) {
-            event.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan & Mengirim...';
-
-            const blok = document.getElementById('blok').value.trim();
-            const nomor = document.getElementById('nomor').value.trim();
-            const bulan = document.getElementById('bulan').value;
-            const nominal = Number(document.getElementById('nominal').value);
-            const keterangan = document.getElementById('keterangan').value.trim();
-            const fileInput = document.getElementById('buktiFile');
-
-            if (!fileInput.files[0]) {
-                alert('Silakan sertakan foto screenshot bukti transfer.');
-                resetButton(btn);
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const base64Image = e.target.result;
-                    const timestamp = new Date().toLocaleString('id-ID');
-
-                    const newData = {
-                        timestamp,
-                        blok,
-                        nomor,
-                        bulan,
-                        nominal,
-                        keterangan,
-                        image: base64Image,
-                        status: 'Menunggu Verifikasi'
-                    };
-
-                    let existingData = JSON.parse(localStorage.getItem('iuran_sampah_data')) || [];
-                    existingData.unshift(newData);
-                    localStorage.setItem('iuran_sampah_data', JSON.stringify(existingData));
-
-                    sendWhatsAppNotification(newData, function() {
-                        alert('Terima kasih! Data konfirmasi pembayaran berhasil dikirim ke Grup WA.');
-                        document.getElementById('iuranForm').reset();
-                        resetButton(btn);
-                    });
-                } catch (err) {
-                    console.error("Gagal menyimpan:", err);
-                    alert("Terjadi kesalahan saat memproses gambar.");
-                    resetButton(btn);
-                }
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-        }
-
-        function submitPengaduan(event) {
-            event.preventDefault();
-            const btn = document.getElementById('p_submitBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Mengirim Pengaduan...';
-
-            const blok = document.getElementById('p_blok').value;
-            const nomor = document.getElementById('p_nomor').value.trim();
-            const nama = document.getElementById('p_nama').value.trim();
-            const kategori = document.getElementById('p_kategori').value;
-            const detail = document.getElementById('p_detail').value.trim();
-            const fileInput = document.getElementById('p_buktiFile');
-
-            const timestamp = new Date().toLocaleString('id-ID');
-
-            const saveAndNotify = (base64Image) => {
-                const newPengaduan = {
-                    timestamp,
-                    blok,
-                    nomor,
-                    nama,
-                    kategori,
-                    detail,
-                    image: base64Image || null,
-                    status: 'Belum Diproses'
-                };
-
-                let existing = JSON.parse(localStorage.getItem('iuran_pengaduan_data')) || [];
-                existing.unshift(newPengaduan);
-                localStorage.setItem('iuran_pengaduan_data', JSON.stringify(existing));
-
-                sendWaPengaduan(newPengaduan, function() {
-                    alert('Pengaduan Anda telah terkirim ke Grup WA pengurus. Terima kasih!');
-                    document.getElementById('pengaduanForm').reset();
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Pengaduan';
-                });
-            };
-
-            if (fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    saveAndNotify(e.target.result);
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                saveAndNotify(null);
             }
         }
 
@@ -823,132 +917,6 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
             }).then(() => { if(callback) callback(); }).catch(() => { if(callback) callback(); });
         }
 
-        function getStatusClass(status) {
-            if (status === 'Lunas / Terverifikasi' || status === 'Selesai / Ditangani') {
-                return 'bg-emerald-100 text-emerald-800 border-emerald-300';
-            } else if (status === 'Ditolak') {
-                return 'bg-red-100 text-red-800 border-red-300';
-            } else if (status === 'Sedang Diproses') {
-                return 'bg-blue-100 text-blue-800 border-blue-300';
-            } else {
-                return 'bg-amber-100 text-amber-800 border-amber-300';
-            }
-        }
-
-        function loadDashboardData() {
-            const tbody = document.getElementById('rekapTableBody');
-            const emptyState = document.getElementById('emptyState');
-            const filterBulan = document.getElementById('filterBulan') ? document.getElementById('filterBulan').value : 'Semua';
-            const reportSubTitle = document.getElementById('reportSubTitle');
-            
-            if (reportSubTitle) reportSubTitle.innerText = `Periode: ${filterBulan}`;
-            const data = JSON.parse(localStorage.getItem('iuran_sampah_data')) || [];
-
-            const filteredData = data.filter(item => {
-                if (filterBulan === 'Semua') return true;
-                return item.bulan === filterBulan;
-            });
-
-            if (tbody) {
-                tbody.innerHTML = '';
-                if (filteredData.length === 0) {
-                    if (emptyState) emptyState.classList.remove('hidden');
-                } else {
-                    if (emptyState) emptyState.classList.add('hidden');
-                    filteredData.forEach((item) => {
-                        const originalIndex = data.findIndex(d => d.timestamp === item.timestamp && d.blok === item.blok && d.nomor === item.nomor);
-                        const currentStatus = item.status || 'Menunggu Verifikasi';
-                        const statusClass = getStatusClass(currentStatus);
-
-                        const tr = document.createElement('tr');
-                        tr.className = "border-b hover:bg-slate-50 transition";
-                        tr.innerHTML = `
-                            <td class="p-3 text-xs text-gray-500">${item.timestamp}</td>
-                            <td class="p-3 font-semibold text-slate-800">Blok ${item.blok} / ${item.nomor}</td>
-                            <td class="p-3 font-medium">${item.bulan}</td>
-                            <td class="p-3 font-semibold text-emerald-700">Rp ${Number(item.nominal).toLocaleString('id-ID')}</td>
-                            <td class="p-3">${item.keterangan}</td>
-                            <td class="p-3 text-center no-print">
-                                <button onclick="openModal('${item.image}')" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 mx-auto transition cursor-pointer">
-                                    <i class="fa-solid fa-eye"></i> Lihat Bukti
-                                </button>
-                            </td>
-                            <td class="p-3 text-center">
-                                <select onchange="updateStatus(${originalIndex}, this.value)" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer transition ${statusClass}">
-                                    <option value="Menunggu Verifikasi" ${currentStatus === 'Menunggu Verifikasi' ? 'selected' : ''}>⏳ Menunggu Verifikasi</option>
-                                    <option value="Lunas / Terverifikasi" ${currentStatus === 'Lunas / Terverifikasi' ? 'selected' : ''}>✅ Lunas / Terverifikasi</option>
-                                    <option value="Ditolak" ${currentStatus === 'Ditolak' ? 'selected' : ''}>❌ Ditolak</option>
-                                </select>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
-            }
-
-            loadPengaduanData();
-            tampilkanSaldo();
-        }
-
-        function loadPengaduanData() {
-            const tbody = document.getElementById('pengaduanTableBody');
-            const emptyState = document.getElementById('emptyPengaduanState');
-            const data = JSON.parse(localStorage.getItem('iuran_pengaduan_data')) || [];
-
-            if (tbody) {
-                tbody.innerHTML = '';
-                if (data.length === 0) {
-                    if (emptyState) emptyState.classList.remove('hidden');
-                    return;
-                }
-
-                if (emptyState) emptyState.classList.add('hidden');
-                data.forEach((item, index) => {
-                    const currentStatus = item.status || 'Belum Diproses';
-                    const statusClass = getStatusClass(currentStatus);
-
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b hover:bg-slate-50 transition";
-                    tr.innerHTML = `
-                        <td class="p-3 text-xs text-gray-500">${item.timestamp}</td>
-                        <td class="p-3 font-semibold text-slate-800">Blok ${item.blok} / ${item.nomor}</td>
-                        <td class="p-3 font-medium">${item.nama}</td>
-                        <td class="p-3"><span class="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded font-medium">${item.kategori}</span></td>
-                        <td class="p-3 max-w-xs text-xs">${item.detail}</td>
-                        <td class="p-3 text-center no-print">
-                            ${item.image ? `<button onclick="openModal('${item.image}')" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 px-3 py-1 rounded text-xs font-semibold cursor-pointer"><i class="fa-solid fa-eye"></i> Foto</button>` : `<span class="text-xs text-gray-400">-</span>`}
-                        </td>
-                        <td class="p-3 text-center">
-                            <select onchange="updatePengaduanStatus(${index}, this.value)" class="text-xs font-semibold px-2 py-1 rounded-lg border outline-none cursor-pointer transition ${statusClass}">
-                                <option value="Belum Diproses" ${currentStatus === 'Belum Diproses' ? 'selected' : ''}>⏳ Belum Diproses</option>
-                                <option value="Sedang Diproses" ${currentStatus === 'Sedang Diproses' ? 'selected' : ''}>🛠️ Sedang Diproses</option>
-                                <option value="Selesai / Ditangani" ${currentStatus === 'Selesai / Ditangani' ? 'selected' : ''}>✅ Selesai / Ditangani</option>
-                            </select>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        }
-
-        function updateStatus(index, newStatus) {
-            let data = JSON.parse(localStorage.getItem('iuran_sampah_data')) || [];
-            if (data[index]) {
-                data[index].status = newStatus;
-                localStorage.setItem('iuran_sampah_data', JSON.stringify(data));
-                loadDashboardData();
-            }
-        }
-
-        function updatePengaduanStatus(index, newStatus) {
-            let data = JSON.parse(localStorage.getItem('iuran_pengaduan_data')) || [];
-            if (data[index]) {
-                data[index].status = newStatus;
-                localStorage.setItem('iuran_pengaduan_data', JSON.stringify(data));
-                loadPengaduanData();
-            }
-        }
-
         function downloadPDF() {
             window.print();
         }
@@ -962,17 +930,21 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
             document.getElementById('imageModal').classList.add('hidden');
         }
 
-        function clearData() {
-            if (confirm('Apakah Anda yakin ingin menghapus seluruh data rekap iuran?')) {
-                localStorage.removeItem('iuran_sampah_data');
-                loadDashboardData();
+        async function clearData() {
+            if (confirm('Apakah Anda yakin ingin menghapus seluruh data rekap iuran di cloud?')) {
+                const dbData = await fetchCloudData();
+                dbData.iuran = [];
+                await updateCloudData(dbData);
+                loadCloudData();
             }
         }
 
-        function clearPengaduanData() {
-            if (confirm('Apakah Anda yakin ingin menghapus seluruh data pengaduan?')) {
-                localStorage.removeItem('iuran_pengaduan_data');
-                loadPengaduanData();
+        async function clearPengaduanData() {
+            if (confirm('Apakah Anda yakin ingin menghapus seluruh data pengaduan di cloud?')) {
+                const dbData = await fetchCloudData();
+                dbData.pengaduan = [];
+                await updateCloudData(dbData);
+                loadCloudData();
             }
         }
 </script>
