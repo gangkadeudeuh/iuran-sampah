@@ -578,6 +578,37 @@
             }
         }
 
+        async function loadPublicData() {
+    try {
+        let response = await fetch('database.json');
+        if (response.ok) {
+            let data = await response.json();
+            // Masukkan data dari database.json ke localStorage agar sinkron
+            if (data.kas_manual) {
+                localStorage.setItem('kas_manual_list', JSON.stringify(data.kas_manual));
+            }
+            if (data.iuran) {
+                localStorage.setItem('iuran_sampah_data', JSON.stringify(data.iuran));
+            }
+            return data;
+        }
+    } catch (e) {
+        console.log("Gagal memuat database.json");
+    }
+    
+    return {
+        kas_manual: JSON.parse(localStorage.getItem('kas_manual_list')) || [],
+        iuran: JSON.parse(localStorage.getItem('iuran_sampah_data')) || []
+    };
+}
+
+// Panggil otomatis saat halaman dimuat
+document.addEventListener("DOMContentLoaded", async () => {
+    await loadPublicData();
+    if (typeof tampilkanSaldo === 'function') {
+        tampilkanSaldo();
+    }
+});
         // FUNGSI TAMBAH KAS MANUAL (Disinkronkan dengan localStorage & format publik)
 function tambahKasManual() {
     const inputNominal = document.getElementById('inputManualSaldo');
