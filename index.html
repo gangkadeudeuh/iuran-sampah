@@ -578,7 +578,7 @@
             }
         }
 
-        // FUNGSI TAMBAH KAS MANUAL
+        // FUNGSI TAMBAH KAS MANUAL (Disinkronkan dengan localStorage & format publik)
 function tambahKasManual() {
     const inputNominal = document.getElementById('inputManualSaldo');
     const inputKet = document.getElementById('inputKetSaldo');
@@ -608,6 +608,7 @@ function tambahKasManual() {
             image: base64Img || null
         };
 
+        // Simpan ke localStorage untuk preview instan di admin
         let listKasManual = JSON.parse(localStorage.getItem('kas_manual_list')) || [];
         listKasManual.unshift(newRecord);
         localStorage.setItem('kas_manual_list', JSON.stringify(listKasManual));
@@ -618,7 +619,9 @@ function tambahKasManual() {
         fileInput.value = '';
 
         tampilkanSaldo();
-        alert('Pencatatan kas manual berhasil disimpan! Jangan lupa buat file database.json atau update commit ke GitHub agar warga bisa melihatnya.');
+        
+        // Pesan panduan untuk menyalin ke database.json agar tampil publik
+        alert('Berhasil disimpan di admin! Catatan: Karena menggunakan GitHub Pages statis, salin objek data baru ini ke dalam file database.json di VS Code lalu git push agar warga lain bisa melihatnya secara online.');
     };
 
     if (fileInput && fileInput.files[0]) {
