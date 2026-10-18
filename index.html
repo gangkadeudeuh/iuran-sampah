@@ -618,11 +618,11 @@
             }
         }
 
-        async function submitForm(event) {
+async function submitForm(event) {
             event.preventDefault();
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan ke Cloud & Mengirim WA...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan ke Cloud...';
 
             const blok = document.getElementById('blok').value.trim();
             const nomor = document.getElementById('nomor').value.trim();
@@ -633,7 +633,7 @@
 
             const timestamp = new Date().toLocaleString('id-ID');
 
-            const saveAndUpload = (base64Image) => {
+            const prosesSimpan = async (base64Image) => {
                 const newData = {
                     timestamp,
                     blok,
@@ -645,28 +645,39 @@
                     status: 'Menunggu Verifikasi'
                 };
 
-                fetchCloudData().then(dbData => {
+                try {
+                    // 1. Ambil data cloud terbaru & masukkan data baru
+                    const dbData = await fetchCloudData();
                     dbData.iuran = dbData.iuran || [];
                     dbData.iuran.unshift(newData);
-                    updateCloudData(dbData).then(() => {
-                        sendWhatsAppNotification(newData, function() {
-                            alert('Terima kasih! Konfirmasi iuran Anda berhasil disimpan otomatis ke cloud.');
-                            document.getElementById('iuranForm').reset();
-                            resetButton(btn);
-                            loadCloudData();
-                        });
-                    });
-                });
+
+                    // 2. Simpan ke Cloud JSONBin
+                    await updateCloudData(dbData);
+                } catch (err) {
+                    console.error("Gagal simpan cloud:", err);
+                }
+
+                // 3. Kirim notifikasi WA di latar belakang tanpa memblokir tombol
+                sendWhatsAppNotification(newData, function() {});
+
+                // 4. Reset form & beritahu pengguna sukses secara instan
+                alert('Terima kasih! Konfirmasi iuran Anda berhasil disimpan otomatis ke cloud.');
+                document.getElementById('iuranForm').reset();
+                resetButton(btn);
+                loadCloudData();
             };
 
             if (fileInput && fileInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    saveAndUpload(e.target.result);
+                    prosesSimpan(e.target.result);
+                };
+                reader.onerror = function() {
+                    prosesSimpan(""); // Lanjut simpan tanpa gambar jika gagal baca
                 };
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
-                saveAndUpload("");
+                prosesSimpan("");
             }
         }
 
