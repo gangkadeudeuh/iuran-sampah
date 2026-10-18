@@ -497,27 +497,50 @@
             }
         }
 
-        async function updateCloudData(fullData) {
-         try {
-             const current = await fetchCloudData();
-             const safePayload = {
-                 iuran: fullData.iuran || current.iuran || [],
-                 pengaduan: fullData.pengaduan || current.pengaduan || [],
-                 kas_manual: fullData.kas_manual && fullData.kas_manual.length > 0 ? fullData.kas_manual : current.kas_manual
-             };
+        async function fetchCloudData() {
+            try {
+                const response = await fetch(JSONBIN_URL, {
+                    method: 'GET',
+                    headers: { 
+                        'X-Master-Key': JSONBIN_API_KEY
+                    }
+                });
+                const json = await response.json();
+                
+                let rawData = json.record ? json.record : json;
+                
+                let defaultKasManual = Array.isArray(rawData.kas_manual) && rawData.kas_manual.length > 0 ? rawData.kas_manual : [
+                    {
+                        "waktu": "18/10/2026, 17.03.03",
+                        "bulan": "Oktober 2026",
+                        "nominal": 500000,
+                        "keterangan": "Bapaknya mas anwar baru kirim 500rb, kekurangannya 1.800.000 akan dibayarkan akhir bulan 11 2026",
+                        "image": "WhatsApp Image 2026-10-18 at 17.23.10.jpeg"
+                    }
+                ];
 
-             await fetch(JSONBIN_URL, {
-                 method: 'PUT',
-                 headers: {
-                     'Content-Type': 'application/json',
-                     'X-Master-Key': JSONBIN_API_KEY
-                 },
-                 body: JSON.stringify(safePayload)
-             });
-         } catch (e) {
-             console.error("Gagal update data ke cloud:", e);
-         }
-     }
+                return {
+                    iuran: Array.isArray(rawData.iuran) ? rawData.iuran : [],
+                    pengaduan: Array.isArray(rawData.pengaduan) ? rawData.pengaduan : [],
+                    kas_manual: defaultKasManual
+                };
+            } catch (e) {
+                console.error("Gagal mengambil data dari cloud:", e);
+                return { 
+                    iuran: [], 
+                    pengaduan: [], 
+                    kas_manual: [
+                        {
+                            "waktu": "18/10/2026, 17.03.03",
+                            "bulan": "Oktober 2026",
+                            "nominal": 500000,
+                            "keterangan": "Bapaknya mas anwar baru kirim 500rb, kekurangannya 1.800.000 akan dibayarkan akhir bulan 11 2026",
+                            "image": "WhatsApp Image 2026-10-18 at 17.23.10.jpeg"
+                        }
+                    ] 
+                };
+            }
+        }
 
         async function loadCloudData() {
             const data = await fetchCloudData();
