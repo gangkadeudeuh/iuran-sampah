@@ -444,7 +444,25 @@
                     }
                 }
             }
-
+// Tambahkan di dalam document.addEventListener('DOMContentLoaded', function() { ... })
+fetch('database.json')
+    .then(response => response.json())
+        .then(data => {
+            if (data.iuran && data.iuran.length > 0 && !localStorage.getItem('iuran_sampah_data')) {
+                localStorage.setItem('iuran_sampah_data', JSON.stringify(data.iuran));
+            }
+            if (data.pengaduan && data.pengaduan.length > 0 && !localStorage.getItem('iuran_pengaduan_data')) {
+                localStorage.setItem('iuran_pengaduan_data', JSON.stringify(data.pengaduan));
+            }
+            loadDashboardData();
+            loadPengaduanData();
+        })
+        .catch(err => {
+            console.log("Memuat dari localStorage lokal:", err);
+            loadDashboardData();
+            loadPengaduanData();
+        });
+        
             // Hitung dan tampilkan total saldo kas saat web dibuka
             tampilkanSaldo();
         });
