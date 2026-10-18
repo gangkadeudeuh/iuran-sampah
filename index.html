@@ -452,7 +452,7 @@
             loadCloudData();
         });
 
-    async function fetchCloudData() {
+        async function fetchCloudData() {
             try {
                 const response = await fetch(JSONBIN_URL, {
                     method: 'GET',
@@ -475,6 +475,21 @@
             }
         }
 
+        async function updateCloudData(fullData) {
+            try {
+                await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify(fullData)
+                });
+            } catch (e) {
+                console.error("Gagal update data ke cloud:", e);
+            }
+        }
+
         async function loadCloudData() {
             const data = await fetchCloudData();
             console.log("Data Cloud Berhasil Dimuat:", data);
@@ -483,6 +498,7 @@
             renderTabelPengaduan(data.pengaduan || []);
             renderKasSaldo(data);
         }
+
         function renderKasSaldo(data) {
             const listKasManual = data.kas_manual || [];
             const dataIuran = data.iuran || [];
@@ -590,7 +606,7 @@
             }
         }
 
-async function submitForm(event) {
+        async function submitForm(event) {
             event.preventDefault();
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
@@ -618,21 +634,17 @@ async function submitForm(event) {
                 };
 
                 try {
-                    // 1. Ambil data cloud terbaru & masukkan data baru
                     const dbData = await fetchCloudData();
                     dbData.iuran = dbData.iuran || [];
                     dbData.iuran.unshift(newData);
 
-                    // 2. Simpan ke Cloud JSONBin
                     await updateCloudData(dbData);
                 } catch (err) {
                     console.error("Gagal simpan cloud:", err);
                 }
 
-                // 3. Kirim notifikasi WA di latar belakang tanpa memblokir tombol
                 sendWhatsAppNotification(newData, function() {});
 
-                // 4. Reset form & beritahu pengguna sukses secara instan
                 alert('Terima kasih! Konfirmasi iuran Anda berhasil disimpan otomatis ke cloud.');
                 document.getElementById('iuranForm').reset();
                 resetButton(btn);
@@ -645,7 +657,7 @@ async function submitForm(event) {
                     prosesSimpan(e.target.result);
                 };
                 reader.onerror = function() {
-                    prosesSimpan(""); // Lanjut simpan tanpa gambar jika gagal baca
+                    prosesSimpan("");
                 };
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
@@ -668,7 +680,7 @@ async function submitForm(event) {
 
             const timestamp = new Date().toLocaleString('id-ID');
 
-            const saveAndNotify = (base64Image) => {
+            const saveAndNotify = async (base64Image) => {
                 const newPengaduan = {
                     timestamp,
                     blok,
@@ -680,25 +692,31 @@ async function submitForm(event) {
                     status: 'Belum Diproses'
                 };
 
-                fetchCloudData().then(dbData => {
+                try {
+                    const dbData = await fetchCloudData();
                     dbData.pengaduan = dbData.pengaduan || [];
                     dbData.pengaduan.unshift(newPengaduan);
-                    updateCloudData(dbData).then(() => {
-                        sendWaPengaduan(newPengaduan, function() {
-                            alert('Pengaduan Anda berhasil dikirim dan tersimpan di cloud.');
-                            document.getElementById('pengaduanForm').reset();
-                            btn.disabled = false;
-                            btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Pengaduan';
-                            loadCloudData();
-                        });
-                    });
-                });
+                    await updateCloudData(dbData);
+                } catch (err) {
+                    console.error("Gagal simpan pengaduan:", err);
+                }
+
+                sendWaPengaduan(newPengaduan, function() {});
+
+                alert('Pengaduan Anda berhasil dikirim dan tersimpan di cloud.');
+                document.getElementById('pengaduanForm').reset();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Pengaduan';
+                loadCloudData();
             };
 
             if (fileInput && fileInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     saveAndNotify(e.target.result);
+                };
+                reader.onerror = function() {
+                    saveAndNotify(null);
                 };
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
