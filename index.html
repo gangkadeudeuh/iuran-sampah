@@ -452,65 +452,37 @@
             loadCloudData();
         });
 
-       async function fetchCloudData() {
-    try {
-        const response = await fetch(JSONBIN_URL, {
-            method: 'GET',
-            headers: { 
-                'X-Master-Key': JSONBIN_API_KEY,
-                'X-Bin-Meta': 'false'
-            }
-        });
-        const json = await response.json();
-        
-        // Jika X-Bin-Meta false, JSONBin langsung mengembalikan objek data
-        if (json && (json.iuran || json.kas_manual)) {
-            return json;
-        } else if (json && json.record) {
-            return json.record;
-        }
-    } catch (e) {
-        console.error("Gagal mengambil data dari cloud:", e);
-    }
-    
-    // Fallback data default jika koneksi gagal
-    return {
-        iuran: [],
-        pengaduan: [],
-        kas_manual: [
-            {
-                "waktu": "18/10/2026, 17.03.03",
-                "bulan": "Oktober 2026",
-                "nominal": 500000,
-                "keterangan": "Bapaknya mas anwar baru kirim 500rb, kekurangannya 1.800.000 akan dibayarkan akhir bulan 11 2026",
-                "image": "WhatsApp Image 2026-10-18 at 17.23.10.jpeg"
-            }
-        ]
-    };
-}
-
-        async function updateCloudData(fullData) {
+    async function fetchCloudData() {
             try {
-                await fetch(JSONBIN_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_API_KEY
-                    },
-                    body: JSON.stringify(fullData)
+                const response = await fetch(JSONBIN_URL, {
+                    method: 'GET',
+                    headers: { 
+                        'X-Master-Key': JSONBIN_API_KEY,
+                        'X-Bin-Meta': 'false'
+                    }
                 });
+                const json = await response.json();
+                
+                let rawData = json.record ? json.record : json;
+                return {
+                    iuran: Array.isArray(rawData.iuran) ? rawData.iuran : [],
+                    pengaduan: Array.isArray(rawData.pengaduan) ? rawData.pengaduan : [],
+                    kas_manual: Array.isArray(rawData.kas_manual) ? rawData.kas_manual : []
+                };
             } catch (e) {
-                console.error("Gagal update data ke cloud:", e);
+                console.error("Gagal mengambil data dari cloud:", e);
+                return { iuran: [], pengaduan: [], kas_manual: [] };
             }
         }
 
         async function loadCloudData() {
             const data = await fetchCloudData();
+            console.log("Data Cloud Berhasil Dimuat:", data);
+            
             renderTabelIuran(data.iuran || []);
             renderTabelPengaduan(data.pengaduan || []);
             renderKasSaldo(data);
         }
-
         function renderKasSaldo(data) {
             const listKasManual = data.kas_manual || [];
             const dataIuran = data.iuran || [];
