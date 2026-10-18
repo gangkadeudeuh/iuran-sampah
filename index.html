@@ -578,15 +578,59 @@
             }
         }
 
-        // FUNGSI HAPUS KAS MANUAL
-        function hapusKasManual(index) {
-            if (confirm('Apakah Anda yakin ingin menghapus catatan kas ini?')) {
-                let listKasManual = JSON.parse(localStorage.getItem('kas_manual_list')) || [];
-                listKasManual.splice(index, 1);
-                localStorage.setItem('kas_manual_list', JSON.stringify(listKasManual));
-                tampilkanSaldo();
-            }
-        }
+        // FUNGSI TAMBAH KAS MANUAL
+function tambahKasManual() {
+    const inputNominal = document.getElementById('inputManualSaldo');
+    const inputKet = document.getElementById('inputKetSaldo');
+    const selectBulanKasManual = document.getElementById('bulanKasManual');
+    const fileInput = document.getElementById('buktiKasManualFile');
+
+    const nominal = Number(inputNominal.value);
+    const keterangan = inputKet.value.trim();
+    const bulan = selectBulanKasManual ? selectBulanKasManual.value : '';
+
+    if (!nominal || nominal <= 0) {
+        alert('Silakan masukkan nominal uang kas yang valid.');
+        return;
+    }
+
+    if (!keterangan) {
+        alert('Silakan masukkan keterangan / nama penyerah uang.');
+        return;
+    }
+
+    const simpanData = (base64Img) => {
+        const newRecord = {
+            waktu: new Date().toLocaleString('id-ID'),
+            bulan: bulan,
+            nominal: nominal,
+            keterangan: keterangan,
+            image: base64Img || null
+        };
+
+        let listKasManual = JSON.parse(localStorage.getItem('kas_manual_list')) || [];
+        listKasManual.unshift(newRecord);
+        localStorage.setItem('kas_manual_list', JSON.stringify(listKasManual));
+
+        // Reset Input
+        inputNominal.value = '';
+        inputKet.value = '';
+        fileInput.value = '';
+
+        tampilkanSaldo();
+        alert('Pencatatan kas manual berhasil disimpan! Jangan lupa buat file database.json atau update commit ke GitHub agar warga bisa melihatnya.');
+    };
+
+    if (fileInput && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            simpanData(e.target.result);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+    } else {
+        simpanData(null);
+    }
+}
 
         // HANYA TERIMA "admxyz123". PIN "1234" DITOLAK MUTLAK!
         function bukaDashboard() {
