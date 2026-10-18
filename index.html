@@ -457,22 +457,20 @@
                 const response = await fetch(JSONBIN_URL, {
                     method: 'GET',
                     headers: { 
-                        'X-Master-Key': JSONBIN_API_KEY,
-                        'X-Bin-Meta': 'false'
+                        'X-Master-Key': JSONBIN_API_KEY
                     }
                 });
                 const json = await response.json();
                 
                 let rawData = json.record ? json.record : json;
                 
-                // Jika kas_manual kosong, berikan default saldo awal 500rb agar tidak pernah hilang
                 let defaultKasManual = Array.isArray(rawData.kas_manual) && rawData.kas_manual.length > 0 ? rawData.kas_manual : [
                     {
                         "waktu": "18/10/2026, 17.03.03",
                         "bulan": "Oktober 2026",
                         "nominal": 500000,
-                        "keterangan": "Bapaknya mas anwar baru kirim 500rb, kekurangannya 1.800.000 akan dibayarkan akhir bulan 11 2026",
-                        "image": "WhatsApp Image 2026-10-18 at 17.23.10.jpeg"
+                        "keterangan": "Bapaknya mas anwar baru kirim 500rb",
+                        "image": ""
                     }
                 ];
 
@@ -491,8 +489,8 @@
                             "waktu": "18/10/2026, 17.03.03",
                             "bulan": "Oktober 2026",
                             "nominal": 500000,
-                            "keterangan": "Bapaknya mas anwar baru kirim 500rb, kekurangannya 1.800.000 akan dibayarkan akhir bulan 11 2026",
-                            "image": "WhatsApp Image 2026-10-18 at 17.23.10.jpeg"
+                            "keterangan": "Bapaknya mas anwar baru kirim 500rb",
+                            "image": ""
                         }
                     ] 
                 };
