@@ -382,6 +382,51 @@
         </div>
     </div>
 
+<!-- Bagian Daftar Pengumuman / Arsip Berita Laporan PDF -->
+<div class="max-w-4xl mx-auto px-4 my-6">
+    <div class="p-6 bg-white border border-gray-200 rounded-2xl shadow-sm">
+        <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+            📢 Arsip Pengumuman & Laporan Keuangan
+        </h3>
+        
+        <!-- Daftar Berita / Laporan -->
+        <div class="space-y-3">
+            <!-- Pilihan Laporan Oktober 2026 -->
+            <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <span class="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">Oktober 2026</span>
+                    <h4 class="text-sm font-bold text-gray-800 mt-1">Laporan Pertanggungjawaban Kas & Pembelanjaan Pos</h4>
+                </div>
+                <button onclick="openPdfModal('laporan-kas.pdf', 'Laporan Pertanggungjawaban Kas - Oktober 2026')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow transition whitespace-nowrap">
+                    Klik untuk Lihat
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal / Popup Universal untuk Menampilkan PDF -->
+<div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+        <div class="bg-emerald-600 text-white px-6 py-4 flex justify-between items-center">
+            <h3 id="pdfModalTitle" class="font-bold text-lg">Dokumen Laporan</h3>
+            <button onclick="closePdfModal()" class="text-white hover:text-gray-200 font-bold text-xl">&times;</button>
+        </div>
+        <div class="p-4 flex-1 overflow-auto bg-gray-100 flex justify-center">
+            <!-- Iframe dinamis tempat PDF dirender -->
+            <iframe id="pdfFrame" src="" class="w-full h-[70vh] border rounded-lg shadow" frameborder="0"></iframe>
+        </div>
+        <div class="bg-gray-50 px-6 py-3 flex justify-end gap-3 border-t">
+            <a id="pdfDownloadBtn" href="" download class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow">
+                Download PDF
+            </a>
+            <button onclick="closePdfModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
     <!-- Footer -->
     <footer class="text-center py-4 text-xs text-gray-500 no-print">
     &copy; 2026 Gang Kadeudeuh by <a href="https://muktijasaweb.com" target="_blank" class="text-emerald-600 hover:underline font-medium">muktijasaweb.com</a>
@@ -389,6 +434,26 @@
 
     <!-- SKRIP UTAMA -->
 <script>
+
+function openPdfModal(pdfFileName, titleText) {
+    if (event) event.preventDefault();
+    
+    // Set judul modal sesuai tombol yang diklik
+    document.getElementById('pdfModalTitle').innerText = titleText;
+    
+    // Set sumber file PDF pada iframe dan tombol download
+    document.getElementById('pdfFrame').src = pdfFileName;
+    document.getElementById('pdfDownloadBtn').href = pdfFileName;
+    
+    // Tampilkan modal
+    document.getElementById('pdfModal').classList.remove('hidden');
+}
+
+function closePdfModal() {
+    document.getElementById('pdfModal').classList.add('hidden');
+    // Kosongkan iframe agar berhenti memuat saat ditutup
+    document.getElementById('pdfFrame').src = "";
+}
         const FONNTE_TOKEN = "RV12hvyeeNLfa9iUnowM";
         const FONNTE_SENDER = "6288709656799";
         const FONNTE_TARGET = "128363044627819543@g.us";
@@ -513,7 +578,7 @@
                     {
                         "waktu": "18/10/2026, 17.03.03",
                         "bulan": "Oktober 2026",
-                        "nominal": 500000,
+                        "nominal": 164000,
                         "keterangan": "Bapaknya mas anwar baru kirim 500rb, kekurangannya 1.800.000 akan dibayarkan akhir bulan 11 2026",
                         "image": "WhatsApp Image 2026-10-18 at 17.23.10.jpeg"
                     }
